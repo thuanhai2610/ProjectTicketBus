@@ -11,8 +11,9 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
 import { ConfigModule } from '@nestjs/config';
+import { PendingUsersModule } from './pending-users/pending-users.module';
 @Module({
-  imports: [AuthModule, ItemsModule, MongooseModule.forRoot('mongodb://localhost:27017/admin'),ConfigModule.forRoot({
+  imports: [AuthModule, PendingUsersModule, ItemsModule, MongooseModule.forRoot('mongodb://localhost:27017/admin'),ConfigModule.forRoot({
       isGlobal: true, // Làm cho ConfigModule có sẵn toàn cục
       envFilePath: '.env', // Đường dẫn đến file .env
     }),

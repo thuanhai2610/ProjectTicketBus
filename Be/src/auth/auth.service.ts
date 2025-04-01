@@ -5,6 +5,7 @@ import { OtpService } from 'src/otp/otp.service';
 import { MailerService } from '@nestjs-modules/mailer';
 import { randomInt } from 'crypto';
 import { Types } from 'mongoose';
+import { PendingUsersService } from 'src/pending-users/pending-users.service';
 @Injectable()
 export class AuthService {
     constructor (
@@ -12,6 +13,7 @@ export class AuthService {
         private jwtService: JwtService,
         private otpService: OtpService,
         private mailerService: MailerService,
+        private pendingUsersService: PendingUsersService,
     ) {}
     async verifyToken(token: string): Promise<any> {
       try {
@@ -39,6 +41,9 @@ export class AuthService {
 }
 
 async login(user: any, accessToken?: string) {
+    if (!user.isEmailVerified === false) {
+        throw new BadRequestException('Email not verified. Please verify your email before logging in.');
+    }
   if (accessToken && typeof accessToken === 'string') {
       try {
           const { user: tokenUser, payload } = await this.verifyToken(accessToken);
@@ -64,90 +69,104 @@ async login(user: any, accessToken?: string) {
   };
 }
 async register(username: string, password: string, email: string, role: string = 'user') {
-  try {
-      console.log('Starting registration:', { username, email, role });
+    try {
+        console.log('Starting registration:', { username, email, role });
+        const existingUser = await this.usersService.findOne(username);
+        if (existingUser) {
+            console.log('Username already exists in users:', username);
+            throw new BadRequestException('Username already exists');
+        }
+        const existingPendingUser = await this.pendingUsersService.findByUsername(username);
+        if (existingPendingUser) {
+            console.log('Username already exists in pendingUsers:', username);
+            throw new BadRequestException('Username already exists (pending verification)');
+        }
+        console.log('Username is available:', username);
+        const hashedPassword = await this.usersService.hashedPassword(password);
+        const userData = {
+            username,
+            password: hashedPassword,
+            email,
+            role,
+            emailVerified: false,
+        };
+        console.log('User data prepared:', userData);
+        const pendingUser = await this.pendingUsersService.create(
+            userData.username,
+            userData.password,
+            userData.email,
+            userData.role,
+            userData.emailVerified,
+        );
+        console.log('Pending user created successfully:', pendingUser);
+        const otp = randomInt(100000, 999999).toString();
+        console.log('Generated OTP:', otp);
+        if (!email) {
+            console.log('Email is missing');
+            throw new BadRequestException('Email is required');
+        }
+        console.log('Email validated:', email);
+        const otpRecord = await this.otpService.create(pendingUser._id.toString(), otp);
+        console.log('OTP saved to database for pending user:', pendingUser._id, 'OTP record:', otpRecord);
+        console.log('Attempting to send email with OTP to:', email);
+        await this.mailerService.sendMail({
+            to: email,
+            subject: 'Verify your email',
+            template: './verify-email',
+            context: {
+                name: username,
+                otp,
+            },
+        });
+        console.log('Email with OTP sent successfully to:', email);
 
-      const existingUser = await this.usersService.findOne(username);
-      if (existingUser) {
-          console.log('Username already exists:', username);
-          throw new BadRequestException('Username already exists');
-      }
-
-      const user = await this.usersService.create(username, password, email, role, false);
-      console.log('User created successfully:', user);
-
-      const userObject = user.toObject ? user.toObject() : user;
-      const { password: _, ...result } = userObject;
-
-      try {
-          const otp = randomInt(100000, 999999).toString();
-          console.log('Generated OTP:', otp);
-
-          await this.otpService.create(result._id, otp);
-          console.log('OTP saved to database for user:', result._id);
-
-          if (!result.email) {
-              console.log('Email is missing for user:', result._id);
-              throw new BadRequestException('Email is missing for the user');
-          }
-
-          await this.mailerService.sendMail({
-              to: result.email,
-              subject: 'Verify your email',
-              template: './verify-email',
-              context: {
-                  name: result.username,
-                  otp,
-              },
-          });
-          console.log('Email sent successfully to:', result.email);
-      } catch (error) {
-          // Rollback: Delete the user if OTP creation or email sending fails
-          console.log('Rolling back user creation due to error:', error.message);
-          await this.usersService.delete(result._id);
-          console.log('User deleted:', result._id);
-          throw error;
-      }
-
-      return { message: 'OTP sent to your email', userId: result._id };
-  } catch (error) {
-      console.error('Error during registration:', error);
-      const errorMessage = error.message || 'Unknown error occurred during registration';
-      throw new BadRequestException(errorMessage);
-  }
+        return { message: 'OTP sent to your email', userId: pendingUser._id };
+    } catch (error) {
+        console.error('Error during registration:', error);
+        const errorMessage = error.message || 'Unknown error occurred during registration';
+        throw new BadRequestException(errorMessage);
+    }
 }
 async verifyOtp(otp: string) {
-  console.log('Verifying OTP:', otp);
+    console.log('Verifying OTP:', otp);
+    const otpRecord = await this.otpService.findByOtp(otp);
+    if (!otpRecord) {
+        console.log('OTP not found:', otp);
+        const expiredOtpRecord = await this.otpService.findByOtpWithoutExpiration( otp );
+        if (expiredOtpRecord) {
+            console.log('OTP exists but is expired:', expiredOtpRecord);
+            throw new BadRequestException('The OTP has expired. Please request a new one.');
+        }
 
-  // Find the OTP record using the OTP code
-  const otpRecord = await this.otpService.findByOtp(otp);
-  if (!otpRecord) {
-      console.log('OTP not found:', otp);
-      throw new BadRequestException('Invalid or expired OTP');
-  }
-  console.log('OTP record found:', otpRecord);
+        throw new BadRequestException('Invalid OTP. Please try again.');
+    }
+    console.log('OTP record found:', otpRecord);
+    const userId = new Types.ObjectId(otpRecord.userId);
+    const pendingUser = await this.pendingUsersService.findById(userId.toString());
+    if (!pendingUser) {
+        console.log('Pending user not found for userId:', userId);
+        throw new BadRequestException('User not found. Please register again.');
+    }
+    console.log('Pending user found:', pendingUser);
+    try {
+        const user = await this.usersService.create(
+            pendingUser.username,
+            pendingUser.password,
+            pendingUser.email,
+            pendingUser.role,
+            true, 
+        );
+        console.log('User created in users collection:', user);
 
-  // Convert otpRecord.userId to ObjectId
-  const userId = new Types.ObjectId(otpRecord.userId);
+        await this.pendingUsersService.delete(userId.toString());
+        console.log('Pending user deleted:', userId);
+        await this.otpService.delete(userId.toString(), otp);
+        console.log('OTP deleted:', otp);
+    } catch (error) {
+        console.error('Error during database updates:', error);
+        throw new BadRequestException('Failed to complete verification. Please try again.');
+    }
 
-  // Find the user using the converted userId
-  const user = await this.usersService.findById(userId.toString());
-  if (!user) {
-      console.log('User not found for userId:', userId);
-      // Delete the OTP record using the converted userId
-      await this.otpService.delete(userId.toString(), otp);
-      throw new BadRequestException('User not found. Please register again.');
-  }
-  console.log('User found:', user);
-
-  // Update email verification status
-  await this.usersService.updateEmailVerified(userId.toString(), true);
-  console.log('Email verified for user:', userId);
-
-  // Delete the OTP record
-  await this.otpService.delete(userId.toString(), otp);
-  console.log('OTP deleted:', otp);
-
-  return { message: 'Email verified successfully. You can now log in.' };
+    return { message: 'Email verified successfully. You can now log in.' };
 }
 }
