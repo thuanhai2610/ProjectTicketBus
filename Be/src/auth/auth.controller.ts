@@ -1,4 +1,4 @@
-import { Controller, Post, Request, UseGuards, Body, Get, Headers } from '@nestjs/common';
+import { Controller, Post, Request, UseGuards, Body, Get, Headers, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './local-auth.guard';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -37,4 +37,17 @@ async verifyOtp(@Body('otp') otp: string) {
   getProtected(@Request() req) {
     return { message: 'this is protected for admin', user: req.user };
   }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() forgotPasswordDto: { email: string }) {
+      return this.authService.forgotPassword(forgotPasswordDto.email);
+  }
+
+  @Post('change-password')
+    @HttpCode(HttpStatus.OK)
+    async changePassword(@Body() changePasswordDto: { userId: string; newPassword: string }) {
+        return this.authService.changePassword(changePasswordDto.userId, changePasswordDto.newPassword);
+    }
+
 }
