@@ -1,4 +1,9 @@
-
+/* eslint-disable prettier/prettier */
+// eslint-disable-next-line prettier/prettier
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable prettier/prettier */
 import {
     CanActivate,
     ExecutionContext,

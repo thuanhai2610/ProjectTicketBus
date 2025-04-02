@@ -18,7 +18,9 @@ const Footer = () => {
                                 Ticket<span className='text-neutral-500' >Bus</span>
                             </Link>
                             <p className="text-sm text-neutral-500 font-normal">
-                                Bus Ticket Online is a modern platform that makes booking bus tickets easy, fast, and convenient.
+                            Bus Ticket Online là một nền tảng hiện đại giúp việc đặt vé xe buýt trở nên dễ dàng, nhanh chóng và tiện lợi. 
+                            Với giao diện thân thiện, người dùng có thể tìm kiếm chuyến xe, đặt vé, thanh toán trực tuyến và theo dõi lịch trình một cách thuận tiện. 
+                            Hệ thống hỗ trợ nhiều phương thức thanh toán an toàn, cùng với dịch vụ chăm sóc khách hàng tận tình, đảm bảo mang đến trải nghiệm tốt nhất cho hành khách.
                             </p>
                         </div>
                         <div className="w-full flex items-center gap-x-5">

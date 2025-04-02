@@ -1,60 +1,71 @@
-/* eslint-disable no-unused-vars */
-
-import React, { useState, useEffect } from 'react'
-import { FaBars, FaMoon, FaSun } from 'react-icons/fa'
-import { FaX } from 'react-icons/fa6';
-import { Link } from 'react-router-dom'
-
+import React, { useState, useEffect } from 'react';
+import { FaBars, FaMoon, FaSun, FaUserCircle } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
+import axios from 'axios';
 
 const Navbar = () => {
-
-    const [scrollPosition, setScrollPostion] = useState(0);
+    const [scrollPosition, setScrollPosition] = useState(0);
     const [isVisible, setIsVisible] = useState(true);
-    const [open, setOpen] = useState(false);
-    const [darkMode, setDarkMode] = useState(() => {
-        return localStorage.getItem("theme") === "dark";
-    });
+    const [darkMode, setDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [username, setUsername] = useState('');
+    const [avatar, setAvatar] = useState('');
+    const navigate = useNavigate();
 
-    //Navrbar items
     const navItems = [
         { label: "Trang Chủ", link: "/" },
         { label: "Chương trình khuyến mãi", link: "/offer" },
         { label: "Tra cứu vé", link: "/bus-tickets" },
         { label: "Tin tức", link: "/blog" },
+    ];
 
-    ]
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (token) {
+            try {
+                const decoded = jwtDecode(token);
+                setUsername(decoded.username || 'User');
+                setIsLoggedIn(true);
+                
+                const fetchUserData = async () => {
+                    try {
+                        const response = await axios.get(`http://localhost:3001/user/${decoded.username}`, {
+                            headers: { Authorization: `Bearer ${token}` },
+                        });
+                        setAvatar(response.data.avatar || '');
+                    } catch (error) {
+                        console.error("Lỗi lấy dữ liệu người dùng", error);
+                        setAvatar('');
+                    }
+                };
+                fetchUserData();
+            } catch (error) {
+                console.error("Token không hợp lệ", error);
+                localStorage.removeItem("token");
+                setIsLoggedIn(false);
+            }
+        }
+    }, []);
 
-    //Handle click open
-    const handleOpen = () => {
-        setOpen(!open)
-    }
-
-
-    //Handle click close
-    const handleClose = () => {
-        setOpen(false);
-    }
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        setIsLoggedIn(false);
+        setUsername('');
+        setAvatar('');
+        navigate("/"); // Điều hướng về trang chủ
+        window.location.reload(); // Tải lại trang để cập nhật giao diện
+    };
 
     useEffect(() => {
         const handleScroll = () => {
-            const currentScrollState = window.scrollY;
-
-            if (currentScrollState > scrollPosition && currentScrollState > 50) {
-                setIsVisible(false);
-            } else {
-                setIsVisible(true);
-            }
-            setScrollPostion(currentScrollState);
+            const currentScroll = window.scrollY;
+            setIsVisible(currentScroll <= scrollPosition || currentScroll <= 50);
+            setScrollPosition(currentScroll);
         };
-
         window.addEventListener('scroll', handleScroll);
-
-        return () => {
-            window.removeEventListener('scroll', handleScroll)
-        };
-
+        return () => window.removeEventListener('scroll', handleScroll);
     }, [scrollPosition]);
-
 
     useEffect(() => {
         if (darkMode) {
@@ -69,44 +80,57 @@ const Navbar = () => {
     return (
         <nav className={`w-full h-[8ch] fixed top-0 left-0 lg:px-24 md:px-16 sm:px-7 px-4 backdrop:blur-lg transition-transform duration-300 z-50 
             ${isVisible ? "translate-y-0" : "-translate-y-full"} 
-            ${scrollPosition > 50 ? "bg-violet-300" : "bg-neutral-100/10"}`}>
-                <div className="w-full h-full flex items-center justify-between">
-                    
-                    {/* Logo section  */}
-                    <Link to="/" className='text-4xl text-primary font-bold'>
-                        Ticket<span className='text-neutral-800'>Bus</span>
-                    </Link>
-            
-                    {/* Nav Links  */}
-                    <div className="flex-1 flex justify-center ">
-                        <ul className="list-none flex items-center justify-center flex-wrap gap-8 text-lg text-neutral-900 font-semibold">
-                            {navItems.map((item, ind) => (
-                                <li key={ind}>
-                                    <Link to={item.link} className='hover:text-primary ease-in-out duration-300 '>
-                                        {item.label}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-            
-                    {/* Button Section  */}
-                    <div className="flex items-center space-x-2">
-                        <Link to="/login" className="text-neutral-500 text-base font-normal hover:text-primary transition duration-300">
-                            Đăng nhập
-                        </Link>
-                        <Link to="/register" className="px-4 py-1 border border-primary text-neutral-500 text-base font-normal rounded-full hover:bg-primary hover:text-neutral-50 transition duration-300">
-                            Đăng ký
-                        </Link>
-                        <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
-                            {darkMode ? <FaSun className="text-yellow-400" /> : <FaMoon className="text-gray-700 dark:text-white" />}
-                        </button>
-                    </div>
-            
-                </div>
-            </nav>
-            
-    )
-}
+            ${scrollPosition > 50 ? "bg-neutral-100 shadow-sm shadow-black" : "bg-neutral-100/10"}`}>
+            <div className="w-full h-full flex items-center justify-between">
+                <Link to="/" className='text-4xl text-primary font-bold'>
+                    Ticket<span className='text-neutral-800'>Bus</span>
+                </Link>
 
-export default Navbar
+                <div className="flex-1 flex justify-center">
+                    <ul className="list-none flex items-center justify-center flex-wrap gap-8 text-lg text-neutral-900 font-semibold">
+                        {navItems.map((item, ind) => (
+                            <li key={ind}>
+                                <Link to={item.link} className='hover:text-primary ease-in-out duration-300'>
+                                    {item.label}
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                    {isLoggedIn ? (
+                        <div className="flex items-center space-x-3">
+                            {avatar ? (
+                                <img src={avatar} alt="User Avatar" className="w-10 h-10 rounded-full border border-primary" />
+                            ) : (
+                                <FaUserCircle className="w-10 h-10 text-gray-500" />
+                            )}
+                            <span className="text-neutral-900 font-medium">{username}</span>
+                            <button
+                                onClick={handleLogout}
+                                className="px-4 py-1 border border-primary text-neutral-500 text-base font-normal rounded-full hover:bg-primary hover:text-neutral-50 transition duration-300"
+                            >
+                                Đăng xuất
+                            </button>
+                        </div>
+                    ) : (
+                        <>
+                            <Link to="/login" className="text-neutral-500 text-base font-normal hover:text-primary transition duration-300">
+                                Đăng nhập
+                            </Link>
+                            <Link to="/register" className="px-4 py-1 border border-primary text-neutral-500 text-base font-normal rounded-full hover:bg-primary hover:text-neutral-50 transition duration-300">
+                                Đăng ký
+                            </Link>
+                        </>
+                    )}
+                    <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                        {darkMode ? <FaSun className="text-yellow-400" /> : <FaMoon className="text-gray-700 dark:text-white" />}
+                    </button>
+                </div>
+            </div>
+        </nav>
+    );
+};
+
+export default Navbar;
