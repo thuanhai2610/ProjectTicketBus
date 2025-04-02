@@ -55,5 +55,9 @@ async verifyOtp(@Body('otp') otp: string) {
     async changePassword(@Body() changePasswordDto: { userId: string; newPassword: string }) {
         return this.authService.changePassword(changePasswordDto.userId, changePasswordDto.newPassword);
     }
+    @Post('google-login')
+    async googleLogin(@Body() body: { credential: string }) {
+        return this.authService.verifyGoogleCredential(body.credential);
+    }
 
 }

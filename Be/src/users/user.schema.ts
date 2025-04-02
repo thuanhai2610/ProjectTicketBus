@@ -5,7 +5,7 @@ import { Document, Types } from 'mongoose';
 export interface User {
     _id: Types.ObjectId; // Explicitly type _id as Types.ObjectId
     username: string;
-    password: string;
+    password?: string;
     email: string;
     role: string;
     emailVerified: boolean;
@@ -17,9 +17,9 @@ export class User {
     username: string;
 
     @Prop({ required: true })
-    password: string;
+    password?: string;
 
-    @Prop({ required: true })
+    @Prop({ required: true, unique: true })
     email: string;
 
     @Prop({ required: true, default: 'user' })

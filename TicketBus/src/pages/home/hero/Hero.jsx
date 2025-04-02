@@ -51,7 +51,7 @@ const Hero = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.85, ease: "easeInOut" }}
         >
-            <RootLayout className="absolute top-32 right-2 w-[64ch] h-auto py-8 px-10 bg-gradient-to-b from-neutral-50/80 via-neutral-50/50 to-neutral-50/20 flex items-start justify-center text-start flex-col gap-6">
+            <RootLayout className="absolute top-32 right-2 w-[60ch] h-auto py-8 px-10 bg-gradient-to-b from-neutral-50/80 via-neutral-50/50 to-neutral-50/20 flex items-start justify-center text-start flex-col gap-6">
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={currentSlide}

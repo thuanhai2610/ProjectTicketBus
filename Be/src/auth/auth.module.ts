@@ -17,9 +17,10 @@ import { jwtConstants } from './constants';
 import { OtpModule } from 'src/otp/otp.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { PendingUsersModule } from 'src/pending-users/pending-users.module';
-
+import { ConfigModule } from '@nestjs/config';
 @Module ({
-    imports: [PassportModule, 
+    imports: [ConfigModule.forRoot(),
+        PassportModule, 
         JwtModule.register({
             secret: jwtConstants.secret,
             signOptions: {expiresIn: '1d'},
