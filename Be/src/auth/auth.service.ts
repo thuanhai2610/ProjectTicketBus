@@ -129,10 +129,12 @@ async register(username: string, password: string, email: string, role: string =
 }
 async verifyOtp(otp: string) {
     console.log('Verifying OTP:', otp);
+
     const otpRecord = await this.otpService.findByOtp(otp);
     if (!otpRecord) {
         console.log('OTP not found:', otp);
-        const expiredOtpRecord = await this.otpService.findByOtpWithoutExpiration( otp );
+
+        const expiredOtpRecord = await this.otpService.findByOtpWithoutExpiration(otp);
         if (expiredOtpRecord) {
             console.log('OTP exists but is expired:', expiredOtpRecord);
             throw new BadRequestException('The OTP has expired. Please request a new one.');
@@ -141,32 +143,100 @@ async verifyOtp(otp: string) {
         throw new BadRequestException('Invalid OTP. Please try again.');
     }
     console.log('OTP record found:', otpRecord);
+
     const userId = new Types.ObjectId(otpRecord.userId);
-    const pendingUser = await this.pendingUsersService.findById(userId.toString());
-    if (!pendingUser) {
-        console.log('Pending user not found for userId:', userId);
-        throw new BadRequestException('User not found. Please register again.');
-    }
-    console.log('Pending user found:', pendingUser);
-    try {
+
+    // Check if the user is in the pendingUsers collection (for registration)
+    const pendingUser = await this.pendingUsersService.findPendingUserById(userId.toString());
+    if (pendingUser) {
+        console.log('Pending user found:', pendingUser);
+
         const user = await this.usersService.create(
             pendingUser.username,
             pendingUser.password,
             pendingUser.email,
             pendingUser.role,
-            true, 
+            true,
         );
-        console.log('User created in users collection:', user);
+        console.log('User created from pending user:', user);
 
         await this.pendingUsersService.delete(userId.toString());
         console.log('Pending user deleted:', userId);
+
         await this.otpService.delete(userId.toString(), otp);
         console.log('OTP deleted:', otp);
-    } catch (error) {
-        console.error('Error during database updates:', error);
-        throw new BadRequestException('Failed to complete verification. Please try again.');
+
+        return { message: 'Email verified successfully. You can now log in.' };
     }
 
-    return { message: 'Email verified successfully. You can now log in.' };
+    // Check if the user is in the users collection (for password reset)
+    const user = await this.usersService.findById(userId.toString());
+    if (!user) {
+        console.log('User not found for userId:', userId);
+        await this.otpService.delete(userId.toString(), otp);
+        throw new BadRequestException('User not found. Please register again.');
+    }
+    console.log('User found:', user);
+
+    await this.otpService.delete(userId.toString(), otp);
+    console.log('OTP deleted:', otp);
+
+    // Return the userId so the frontend can use it to change the password
+    return { message: 'OTP verified successfully. You can now change your password.', userId: userId.toString() };
+}
+async forgotPassword(email: string) {
+    try {
+        console.log('Starting forgot password process for email:', email);
+
+        const user = await this.usersService.findByEmail(email);
+        if (!user) {
+            console.log('User not found for email:', email);
+            throw new BadRequestException('Email not found. Please register first.');
+        }
+        console.log('User found:', user);
+
+        const otp = randomInt(100000, 999999).toString();
+        console.log('Generated OTP for password reset:', otp);
+        const otpRecord = await this.otpService.create(user._id.toString(), otp);
+        console.log('OTP saved to database for user:', user._id, 'OTP record:', otpRecord);
+
+        await this.mailerService.sendMail({
+            to: user.email,
+            subject: 'Reset your password',
+            template: './reset-password',
+            context: {
+                name: user.username,
+                otp,
+            },
+        });
+        console.log('Password reset email sent successfully to:', user.email);
+
+        return { message: 'OTP sent to your email for password reset.', userId: user._id };
+    } catch (error) {
+        console.error('Error during forgot password process:', error);
+        const errorMessage = error.message || 'Unknown error occurred during forgot password process';
+        throw new BadRequestException(errorMessage);
+    }
+}
+async changePassword(userId: string, newPassword: string) {
+    try {
+        console.log('Changing password for userId:', userId);
+
+        const user = await this.usersService.findById(userId);
+        if (!user) {
+            console.log('User not found for userId:', userId);
+            throw new BadRequestException('User not found.');
+        }
+        console.log('User found:', user);
+
+        await this.usersService.updatePassword(userId, newPassword);
+        console.log('Password updated successfully for user:', userId);
+
+        return { message: 'Password changed successfully. You can now log in with your new password.' };
+    } catch (error) {
+        console.error('Error during password change:', error);
+        const errorMessage = error.message || 'Unknown error occurred during password change';
+        throw new BadRequestException(errorMessage);
+    }
 }
 }

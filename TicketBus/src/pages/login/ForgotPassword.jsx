@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FaEnvelope, FaLock } from "react-icons/fa";
+import axios from "axios";
 
 function ForgotPassword() {
     const [email, setEmail] = useState("");
@@ -9,40 +10,42 @@ function ForgotPassword() {
     const [isOtpVerified, setIsOtpVerified] = useState(false);
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [userId, setUserId] = useState(""); // Store userId from forgot password and OTP verification
+    const [error, setError] = useState(""); // Add error state for displaying errors
     const inputRefs = useRef([]);
+    const navigate = useNavigate();
 
     const handleSendOTP = async () => {
-        if (!email) return;
+        if (!email) {
+            setError("Please enter your email address.");
+            return;
+        }
 
         try {
-            //api thực tế
-            await fetch("/api/send-otp", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email }),
-            });
-
+            const response = await axios.post("http://localhost:3001/forgot-password", { email });
             setOtpSent(true);
+            setUserId(response.data.userId); // Store the userId returned from the backend
+            setError("");
         } catch (error) {
+            setError(error.response?.data?.message || "Error sending OTP. Please try again.");
             console.error("Error sending OTP:", error);
         }
     };
 
     const handleVerifyOTP = async () => {
-        try {
-            const response = await fetch("/api/verify-otp", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, otp: otp.join("") }),
-            });
+        const otpCode = otp.join("");
+        if (otpCode.length !== 6) {
+            setError("Please enter a 6-digit OTP.");
+            return;
+        }
 
-            const data = await response.json();
-            if (data.success) {
-                setIsOtpVerified(true);
-            } else {
-                alert("Invalid OTP, please try again!");
-            }
+        try {
+            const response = await axios.post("http://localhost:3001/verify-otp", { otp: otpCode });
+            setIsOtpVerified(true);
+            setUserId(response.data.userId); // Update userId in case it's needed (already set from forgot-password)
+            setError("");
         } catch (error) {
+            setError(error.response?.data?.message || "Error verifying OTP. Please try again.");
             console.error("Error verifying OTP:", error);
         }
     };
@@ -62,25 +65,19 @@ function ForgotPassword() {
 
     const handleResetPassword = async () => {
         if (!newPassword || newPassword !== confirmPassword) {
-            alert("Passwords do not match, please try again!");
+            setError("Passwords do not match. Please try again.");
             return;
         }
 
         try {
-            const response = await fetch("/api/reset-password", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, newPassword }),
+            const response = await axios.post("http://localhost:3001/change-password", {
+                userId,
+                newPassword,
             });
-
-            const data = await response.json();
-            if (data.success) {
-                alert("Password reset successful!");
-                window.location.href = "/login";
-            } else {
-                alert("An error occurred, please try again!");
-            }
+            alert(response.data.message);
+            navigate("/login");
         } catch (error) {
+            setError(error.response?.data?.message || "Error resetting password. Please try again.");
             console.error("Error resetting password:", error);
         }
     };
@@ -102,6 +99,7 @@ function ForgotPassword() {
                                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                             />
                         </div>
+                        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
                         <button onClick={handleSendOTP} className="w-full bg-red-500 text-white py-3 rounded-lg text-lg font-semibold hover:bg-red-600 transition">
                             Send OTP
                         </button>
@@ -123,6 +121,7 @@ function ForgotPassword() {
                                 />
                             ))}
                         </div>
+                        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
                         <button onClick={handleVerifyOTP} className="w-full bg-red-500 text-white py-3 rounded-lg text-lg font-semibold hover:bg-red-600 transition">
                             Verify OTP
                         </button>
@@ -154,6 +153,7 @@ function ForgotPassword() {
                                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                             />
                         </div>
+                        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
                         <button onClick={handleResetPassword} className="w-full bg-red-500 text-white py-3 rounded-lg text-lg font-semibold hover:bg-red-600 transition">
                             Reset Password
                         </button>
