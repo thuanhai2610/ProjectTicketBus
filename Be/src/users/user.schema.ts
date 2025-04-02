@@ -1,9 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
-// Define the User interface with a typed _id
 export interface User {
-    _id: Types.ObjectId; // Explicitly type _id as Types.ObjectId
+    _id: Types.ObjectId; 
     username: string;
     password?: string;
     email: string;
@@ -13,7 +12,9 @@ export interface User {
 
 @Schema()
 export class User {
-    @Prop({ required: true })
+    @Prop()
+    avatar: string; 
+    @Prop({ required: true , unique: true})
     username: string;
 
     @Prop({ required: true })
@@ -27,6 +28,23 @@ export class User {
 
     @Prop({ required: true, default: false })
     emailVerified: boolean;
+
+    @Prop()
+    firstName: string;
+
+    @Prop()
+    lastName: string;
+
+    dob: {
+        day: string;
+        month: string;
+        year: string;
+    };
+
+    @Prop()
+    gender: string;
+    @Prop()
+    phone: string;
 }
 
 export type UserDocument = User & Document;

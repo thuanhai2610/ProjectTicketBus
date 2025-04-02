@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaBars, FaMoon, FaSun, FaUserCircle } from 'react-icons/fa';
+import { FaMoon, FaSun, FaUserCircle } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import axios from 'axios';
@@ -13,13 +13,6 @@ const Navbar = () => {
     const [avatar, setAvatar] = useState('');
     const navigate = useNavigate();
 
-    const navItems = [
-        { label: "Trang Chủ", link: "/" },
-        { label: "Chương trình khuyến mãi", link: "/offer" },
-        { label: "Tra cứu vé", link: "/bus-tickets" },
-        { label: "Tin tức", link: "/blog" },
-    ];
-
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (token) {
@@ -30,9 +23,10 @@ const Navbar = () => {
                 
                 const fetchUserData = async () => {
                     try {
-                        const response = await axios.get(`http://localhost:3001/user/${decoded.username}`, {
+                        const response = await axios.get(`http://localhost:3001/user/profile?username=${decoded.username}`, {
                             headers: { Authorization: `Bearer ${token}` },
                         });
+                        
                         setAvatar(response.data.avatar || '');
                     } catch (error) {
                         console.error("Lỗi lấy dữ liệu người dùng", error);
@@ -53,8 +47,12 @@ const Navbar = () => {
         setIsLoggedIn(false);
         setUsername('');
         setAvatar('');
-        navigate("/"); // Điều hướng về trang chủ
-        window.location.reload(); // Tải lại trang để cập nhật giao diện
+        navigate("/");
+        window.location.reload();
+    };
+
+    const handleGoToProfile = () => {
+        navigate(`/user/profile?username=${username}`);
     };
 
     useEffect(() => {
@@ -88,13 +86,10 @@ const Navbar = () => {
 
                 <div className="flex-1 flex justify-center">
                     <ul className="list-none flex items-center justify-center flex-wrap gap-8 text-lg text-neutral-900 font-semibold">
-                        {navItems.map((item, ind) => (
-                            <li key={ind}>
-                                <Link to={item.link} className='hover:text-primary ease-in-out duration-300'>
-                                    {item.label}
-                                </Link>
-                            </li>
-                        ))}
+                        <li><Link to="/" className='hover:text-primary ease-in-out duration-300'>Trang Chủ</Link></li>
+                        <li><Link to="/offer" className='hover:text-primary ease-in-out duration-300'>Chương trình khuyến mãi</Link></li>
+                        <li><Link to="/bus-tickets" className='hover:text-primary ease-in-out duration-300'>Tra cứu vé</Link></li>
+                        <li><Link to="/blog" className='hover:text-primary ease-in-out duration-300'>Tin tức</Link></li>
                     </ul>
                 </div>
 
@@ -106,7 +101,14 @@ const Navbar = () => {
                             ) : (
                                 <FaUserCircle className="w-10 h-10 text-gray-500" />
                             )}
-                            <span className="text-neutral-900 font-medium">{username}</span>
+                            
+                            <button 
+                                onClick={handleGoToProfile}
+                                className="text-neutral-900 font-medium hover:underline"
+                            >
+                                {username}
+                            </button>
+
                             <button
                                 onClick={handleLogout}
                                 className="px-4 py-1 border border-primary text-neutral-500 text-base font-normal rounded-full hover:bg-primary hover:text-neutral-50 transition duration-300"
@@ -124,6 +126,7 @@ const Navbar = () => {
                             </Link>
                         </>
                     )}
+                    
                     <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
                         {darkMode ? <FaSun className="text-yellow-400" /> : <FaMoon className="text-gray-700 dark:text-white" />}
                     </button>
