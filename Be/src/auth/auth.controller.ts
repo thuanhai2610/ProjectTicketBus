@@ -1,3 +1,9 @@
+/* eslint-disable prettier/prettier */
+// eslint-disable-next-line prettier/prettier
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable prettier/prettier */
 import { Controller, Post, Request, UseGuards, Body, Get, Headers, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './local-auth.guard';

@@ -39,7 +39,7 @@ const Search = () => {
             animate={{ opacity: 1, y: -200 }}
             exit={{ opacity: 0, y: 800 }}
             transition={{ duration: 1.5, ease: "easeInOut" }}
-            className="w-[60%] bg-white shadow-md rounded-lg p-5 flex flex-col items-center justify-center h-80 mx-auto"
+            className="w-[65%] bg-white shadow-md rounded-lg p-5 flex flex-col items-center justify-center h-80 mx-auto"
         >
             <div className="flex items-center gap-8 justify-between relative">
                 <div className="flex flex-1 gap-4 relative">

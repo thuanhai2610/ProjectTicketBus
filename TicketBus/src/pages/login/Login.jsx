@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
@@ -9,7 +10,7 @@ const Login = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
-    const [isLoading, setIsLoading] = useState(false); // Add loading state
+    const [isLoading, setIsLoading] = useState(false); 
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -32,8 +33,9 @@ const Login = () => {
             if (role === "admin") {
                 navigate("/admin");
             } else {
-                navigate("/");
+                navigate("/"); 
             }
+            window.location.reload(); 
         } catch (error) {
             const errorMessage = error.response?.data?.message || "Login failed. Please check your credentials.";
             alert("Error: " + errorMessage);
@@ -41,9 +43,10 @@ const Login = () => {
                 localStorage.removeItem("token");
             }
         } finally {
-            setIsLoading(false); 
+            setIsLoading(false);
         }
     };
+
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-red-100">

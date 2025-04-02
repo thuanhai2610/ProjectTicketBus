@@ -51,8 +51,7 @@ const Hero = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.85, ease: "easeInOut" }}
         >
-            <RootLayout className="absolute top-44 right-12 w-[70ch] h-auto py-6 pr-20 bg-gradient-to-b from-neutral-50/70 via-neutral-50/15 to-neutral-50/5 flex items-start justify-center text-start flex-col gap-6">
-
+            <RootLayout className="absolute top-32 right-2 w-[64ch] h-auto py-8 px-10 bg-gradient-to-b from-neutral-50/80 via-neutral-50/50 to-neutral-50/20 flex items-start justify-center text-start flex-col gap-6">
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={currentSlide}
@@ -83,8 +82,7 @@ const Hero = () => {
                     {slides.map((_, index) => (
                         <span
                             key={index}
-                            className={`w-3 h-3 rounded-full transition-all duration-300 cursor-pointer ${index === currentSlide ? "bg-primary scale-110" : "bg-gray-400"
-                                }`}
+                            className={`w-3 h-3 rounded-full transition-all duration-300 cursor-pointer ${index === currentSlide ? "bg-primary scale-110" : "bg-gray-400"}`}
                             onClick={() => setCurrentSlide(index)}
                         ></span>
                     ))}
