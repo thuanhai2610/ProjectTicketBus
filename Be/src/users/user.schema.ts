@@ -13,7 +13,7 @@ export class User extends Document{
     role: string;
 
     @Prop({ default: false })
-  isEmailVerified: boolean;
+    isEmailVerified: boolean;
 
   @Prop({ required: true, unique: true }) // Thêm trường email
   email: string;

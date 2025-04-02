@@ -10,6 +10,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import { jwtConstants } from './constants';
 import { OtpModule } from 'src/otp/otp.module';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { PendingUsersModule } from 'src/pending-users/pending-users.module';
 
 @Module ({
     imports: [PassportModule, 
@@ -20,6 +21,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
         UsersModule,
         OtpModule,
         MailerModule,
+        PendingUsersModule
     ],
     providers: [AuthService, LocalStrategy, JwtStrategy, JwtAuthGuard],
     controllers: [AuthController],

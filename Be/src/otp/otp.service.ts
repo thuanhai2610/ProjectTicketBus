@@ -29,4 +29,13 @@ async delete(userId: string, otp: string): Promise<void> {
     const userIdObject = new Types.ObjectId(userId);
     await this.otpModel.deleteOne({ userId: userIdObject, otp }).exec();
 }
+async findByOtpWithoutExpiration(otp: string): Promise<Otp | null> {
+    const otpRecord = await this.otpModel.findOne({ otp }).exec();
+    if (!otpRecord) {
+        console.log('No OTP record found for:', otp);
+    } else {
+        console.log('OTP record found :', otpRecord);
+    }
+    return otpRecord;
+}
 }
