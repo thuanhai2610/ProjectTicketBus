@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Get, Injectable, NotFoundException, Req, UseGuards } from "@nestjs/common";
 import * as bcrypt from "bcrypt";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { User, UserDocument } from "./user.schema";
+import { AuthGuard } from "@nestjs/passport";
 
 @Injectable()
 export class UsersService {
@@ -69,4 +70,46 @@ export class UsersService {
                 throw new NotFoundException('User not found');
             }
         }
+        async getUserById(userId: string) {
+            return {
+                username: 'user1',
+                email: 'user1@example.com',
+            };
+        }
+        async updateProfile(userData: any) {
+            const user = await this.userModel.findOne({ username: userData.username });
+        
+            if (!user) {
+              throw new Error('User not found');
+            }
+        
+            user.firstName = userData.firstName;
+            user.lastName = userData.lastName;
+            user.email = userData.email;
+            user.phone = userData.phone;
+            user.dob = userData.dob;
+            user.gender = userData.gender;
+            if (userData.avatar) {
+              user.avatar = userData.avatar; // Lưu đường dẫn ảnh
+            }
+        
+            return user.save();
+          }
+          
+        
+          async updateAvatar(username: string, avatar: string): Promise<UserDocument> {
+            const user = await this.userModel.findOne({ username }).exec();
+            if (!user) {
+              throw new NotFoundException('User not found');
+            }
+        
+            user.avatar = avatar;
+            
+            try {
+              return await user.save();
+            } catch (error) {
+              console.error('Error updating avatar:', error);
+              throw new BadRequestException('Failed to update avatar: ' + error.message);
+            }
+          }
 }
