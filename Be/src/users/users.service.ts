@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import * as bcrypt from "bcrypt";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
@@ -13,26 +13,35 @@ export class UsersService {
         async hashedPassword(password: string): Promise<string> {
             return bcrypt.hash(password, 10);
         }
-        async create(username: string, hashedPassword: string, email: string, role: string = 'user', isEmailVerified: boolean = false): Promise<UserDocument> {
-            const newUser = new this.userModel({
-                username,
-                password: hashedPassword, 
-                email,
-                role,
-                isEmailVerified,
-            });
-            return newUser.save();
+        async create(
+            username: string,
+            password: string,
+            email: string,
+            role: string,
+            emailVerified: boolean,
+        ): Promise<UserDocument> {
+            try {
+                const hashedPassword = await bcrypt.hash(password, 10);
+                const newUser = new this.userModel({
+                    username,
+                    password: hashedPassword,
+                    email,
+                    role,
+                    emailVerified,
+                });
+                return await newUser.save();
+            } catch (error) {
+                console.error('Error saving user to database:', error);
+                throw new BadRequestException('Failed to create user: ' + error.message);
+            }
         }
         async findById(id: string): Promise<UserDocument | null> {
             const userId = new Types.ObjectId(id);
             return this.userModel.findById(userId).exec();
         }
-          async validateUser(username: string, password: string): Promise<UserDocument| null> {
-            const user = await this.userModel
-                .findOne({ username })
-                .select('username password email role emailVerified')
-                .exec();
-            if (user && (await bcrypt.compare(password, user.password))) {
+        async validateUser(username: string, password: string): Promise<UserDocument | null> {
+            const user = await this.userModel.findOne({ username }).exec();
+            if (user && user.password && (await bcrypt.compare(password, user.password))) {
                 return user;
             }
             return null;

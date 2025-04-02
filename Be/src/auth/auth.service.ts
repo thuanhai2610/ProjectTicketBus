@@ -16,15 +16,18 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { randomInt } from 'crypto';
 import { Types } from 'mongoose';
 import { PendingUsersService } from 'src/pending-users/pending-users.service';
+import { OAuth2Client } from 'google-auth-library';
 @Injectable()
 export class AuthService {
+  private googleClient: OAuth2Client;
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
     private otpService: OtpService,
+ 
     private mailerService: MailerService,
     private pendingUsersService: PendingUsersService,
-  ) {}
+  ) { this.googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID); }
   async verifyToken(token: string): Promise<any> {
     try {
       const payload = this.jwtService.verify(token);
@@ -295,4 +298,57 @@ export class AuthService {
       throw new BadRequestException(errorMessage);
     }
   }
+  async loginWithSocial(user: any) {
+    console.log('User data from social provider:', user);
+    if (!user.email) {
+        throw new BadRequestException('Email is required for social login.');
+    }
+
+    let existingUser = await this.usersService.findByEmail(user.email);
+    console.log('Existing user:', existingUser);
+
+    if (!existingUser) {
+        const username = user.firstName && user.lastName 
+            ? `${user.firstName}_${user.lastName}` 
+            : `social_user_${Date.now()}`;
+        existingUser = await this.usersService.create(
+            username,
+            '', 
+            user.email,
+            'user',
+            true,
+        );
+        console.log('New user created:', existingUser);
+    }
+
+    const payload = { username: existingUser.username, sub: existingUser._id.toString(), role: existingUser.role };
+    return {
+        access_token: this.jwtService.sign(payload),
+        role: existingUser.role,
+    };
+}
+async verifyGoogleCredential(credential: string) {
+  try {
+      const ticket = await this.googleClient.verifyIdToken({
+          idToken: credential,
+          audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+      if (!payload) {
+          throw new BadRequestException('Invalid Google credential');
+      }
+
+      const user = {
+          email: payload.email,
+          firstName: payload.given_name,
+          lastName: payload.family_name,
+          picture: payload.picture,
+          accessToken: credential,
+      };
+      return this.loginWithSocial(user);
+  } catch (error) {
+      console.error('Error verifying Google credential:', error);
+      throw new BadRequestException('Failed to verify Google credential: ' + error.message);
+  }
+}
 }
