@@ -6,12 +6,15 @@ import { FaUserCircle } from "react-icons/fa";
 const UpdateProfile = () => {
   const [profile, setProfile] = useState(null);
   const [formData, setFormData] = useState({});
-  const [selectedFile, setSelectedFile] = useState(null); // Store the selected file
+  const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // Backend URL constant
+  const BACKEND_URL = "http://localhost:3001";
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -22,14 +25,18 @@ const UpdateProfile = () => {
           throw new Error("Username is required");
         }
         const response = await axios.get(
-          `http://localhost:3001/user/profile?username=${username}`
+          `${BACKEND_URL}/user/profile?username=${username}`
         );
+        const dobDate = response.data.dob ? new Date(response.data.dob) : null;
+        const formattedDob = dobDate && !isNaN(dobDate.getTime()) 
+  ? `${dobDate.getDate().toString().padStart(2, '0')}/${(dobDate.getMonth() + 1).toString().padStart(2, '0')}/${dobDate.getFullYear()}`
+  : "";
+        
         const profileData = {
           ...response.data,
-          dob: response.data.dob
-            ? new Date(response.data.dob).toISOString().split("T")[0]
-            : "",
+          dob: formattedDob
         };
+        console.log("Formatted profile data:", profileData);
         setProfile(profileData);
         setFormData(profileData);
         setLoading(false);
@@ -67,7 +74,6 @@ const UpdateProfile = () => {
     }
   };
   
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -81,11 +87,17 @@ const UpdateProfile = () => {
     setLoading(true);
     try {
       const formDataToSend = new FormData();
-      formDataToSend.append("firstName", formData.firstName);
-      formDataToSend.append("lastName", formData.lastName);
-      formDataToSend.append("email", formData.email);
+      formDataToSend.append("firstName", formData.firstName || "");
+      formDataToSend.append("lastName", formData.lastName || "");
+      formDataToSend.append("email", formData.email || "");
       formDataToSend.append("phone", formData.phone || "");
-      formDataToSend.append("dob", formData.dob || "");
+      
+      // Only append dob if it's not empty
+      if (formData.dob && formData.dob.trim() !== "") {
+        formDataToSend.append("dob", formData.dob);
+        console.log("Sending DOB:", formData.dob);
+      }
+      
       formDataToSend.append("gender", formData.gender || "");
       formDataToSend.append("username", formData.username);
       
@@ -93,12 +105,19 @@ const UpdateProfile = () => {
         formDataToSend.append("avatar", selectedFile); 
       }
   
-      await axios.post(`http://localhost:3001/user/update-profile`, formDataToSend, {
-        headers: {
-          "Content-Type": "multipart/form-data", 
-        },
-      });
-  
+      console.log("Sending data:", Object.fromEntries(formDataToSend));
+      
+      const response = await axios.post(
+        `${BACKEND_URL}/user/update-profile`, 
+        formDataToSend, 
+        {
+          headers: {
+            "Content-Type": "multipart/form-data", 
+          },
+        }
+      );
+      
+      console.log("Server response:", response.data);
       setSuccessMsg("Cập nhật thông tin thành công!");
       setTimeout(() => {
         navigate(`/user/profile?username=${formData.username}`);
@@ -110,11 +129,18 @@ const UpdateProfile = () => {
       setLoading(false);
     }
   };
-  
-  
 
   const handleCancel = () => {
     navigate(`/user/profile?username=${profile?.username}`);
+  };
+  const getImageUrl = (avatarPath) => {
+    if (!avatarPath) return null;
+    
+    if (avatarPath.startsWith('data:image/')) {
+      return avatarPath;
+    }
+    
+    return `${BACKEND_URL}${avatarPath}`;
   };
 
   if (loading && !profile) {
@@ -138,17 +164,17 @@ const UpdateProfile = () => {
       {/* Sidebar */}
       <div className="w-1/4 p-4 bg-white rounded-lg shadow-lg">
         <div className="flex flex-col items-center">
-        <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-primary">
-  {profile.avatar ? (
-    <img
-      src={profile.avatar}
-      alt="Profile"
-      className="w-full h-full object-cover"
-    />
-  ) : (
-    <FaUserCircle className="w-full h-full text-gray-500" />
-  )}
-</div>
+          <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-primary">
+            {profile.avatar ? (
+              <img
+                src={getImageUrl(profile.avatar)}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <FaUserCircle className="w-full h-full text-gray-500" />
+            )}
+          </div>
 
           <label className="mt-4 bg-primary text-white px-4 py-2 rounded-md cursor-pointer hover:bg-primary-dark">
             Cập nhật ảnh

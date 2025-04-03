@@ -44,3 +44,6 @@ npm install recharts --legacy-peer-deps
 npm install react-calendar --legacy-peer-deps
 npx shadcn@latest add calendar
 npx shadcn@latest init  ( dùng --legacy-peer-deps , newyork )
+
+### Facebook
+npm install react-facebook-login --force

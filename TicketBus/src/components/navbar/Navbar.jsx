@@ -12,6 +12,9 @@ const Navbar = () => {
     const [username, setUsername] = useState('');
     const [avatar, setAvatar] = useState('');
     const navigate = useNavigate();
+    
+    // API base URL
+    const API_BASE_URL = 'http://localhost:3001';
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -23,11 +26,22 @@ const Navbar = () => {
                 
                 const fetchUserData = async () => {
                     try {
-                        const response = await axios.get(`http://localhost:3001/user/profile?username=${decoded.username}`, {
+                        const response = await axios.get(`${API_BASE_URL}/user/profile?username=${decoded.username}`, {
                             headers: { Authorization: `Bearer ${token}` },
                         });
                         
-                        setAvatar(response.data.avatar || '');
+                        // Store the avatar path with proper handling for the uploads folder
+                        if (response.data.avatar) {
+                            // Check if the avatar path already includes the base URL
+                            if (response.data.avatar.startsWith('http')) {
+                                setAvatar(response.data.avatar);
+                            } else {
+                                // Construct the full path for the avatar
+                                setAvatar(`${API_BASE_URL}${response.data.avatar}`);
+                            }
+                        } else {
+                            setAvatar('');
+                        }
                     } catch (error) {
                         console.error("Lỗi lấy dữ liệu người dùng", error);
                         setAvatar('');
@@ -97,7 +111,22 @@ const Navbar = () => {
                     {isLoggedIn ? (
                         <div className="flex items-center space-x-3">
                             {avatar ? (
-                                <img src={avatar} alt="User Avatar" className="w-10 h-10 rounded-full border border-primary" />
+                                <img 
+                                    src={avatar} 
+                                    alt="User Avatar" 
+                                    className="w-10 h-10 rounded-full border border-primary object-cover"
+                                    onError={(e) => {
+                                        console.error("Avatar load error, using default icon");
+                                        e.target.style.display = 'none';
+                                        // If image fails to load, show default icon
+                                        const parent = e.target.parentNode;
+                                        if (parent) {
+                                            const icon = document.createElement('span');
+                                            icon.innerHTML = '<svg class="w-10 h-10 text-gray-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>';
+                                            parent.appendChild(icon);
+                                        }
+                                    }}
+                                />
                             ) : (
                                 <FaUserCircle className="w-10 h-10 text-gray-500" />
                             )}

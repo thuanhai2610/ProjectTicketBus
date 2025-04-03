@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { PendingUser, PendingUserDocument } from './schemas/pending-user.schema';
@@ -7,16 +7,38 @@ import { PendingUser, PendingUserDocument } from './schemas/pending-user.schema'
 export class PendingUsersService {
     constructor(@InjectModel(PendingUser.name) private pendingUserModel: Model<PendingUserDocument>) {}
 
-    async create(username: string, hashedPassword: string, email: string, role: string = 'user', isEmailVerified: boolean = false): Promise<PendingUserDocument> {
-        const newPendingUser = new this.pendingUserModel({
+    async create(
+        username: string,
+        hashedPassword: string,
+        email: string,
+        role: string = 'user',
+        isEmailVerified: boolean = false,
+      ): Promise<PendingUserDocument> {
+        try {
+          // Check for existing pending user
+          const existingPendingUser = await this.pendingUserModel
+            .findOne({ username })
+            .exec();
+          if (existingPendingUser) {
+            console.log('Pending user already exists:', username);
+            throw new BadRequestException('Pending user already exists');
+          }
+    
+          const newPendingUser = new this.pendingUserModel({
             username,
             password: hashedPassword,
             email,
             role,
             isEmailVerified,
-        });
-        return newPendingUser.save();
-    }
+          });
+          const savedPendingUser = await newPendingUser.save();
+          console.log('Pending user created:', savedPendingUser._id);
+          return savedPendingUser;
+        } catch (error) {
+          console.error('Error creating pending user:', error);
+          throw new BadRequestException('Failed to create pending user: ' + error.message);
+        }
+      }
 
     async findById(id: string): Promise<PendingUserDocument | null> {
         const userId = new Types.ObjectId(id);

@@ -17,6 +17,7 @@ import { randomInt } from 'crypto';
 import { Types } from 'mongoose';
 import { PendingUsersService } from 'src/pending-users/pending-users.service';
 import { OAuth2Client } from 'google-auth-library';
+
 @Injectable()
 export class AuthService {
   private googleClient: OAuth2Client;
@@ -53,38 +54,43 @@ export class AuthService {
     return null;
   }
 
-  async login(user: any, accessToken?: string) {
-    if (!user.isEmailVerified === false) {
-      throw new BadRequestException(
-        'Email not verified. Please verify your email before logging in.',
-      );
-    }
-    if (accessToken && typeof accessToken === 'string') {
-      try {
-        const { user: tokenUser, payload } =
-          await this.verifyToken(accessToken);
-        if (tokenUser.username === user.username) {
-          console.log('Token is valid for user:', user.username);
-          return {
-            access_token: accessToken,
-            role: user.role,
-          };
-        } else {
-          console.log(
-            'Token does not belong to this user, proceeding with new token generation',
-          );
-        }
-      } catch (error) {
-        console.log('Token verification failed:', error.message);
+  async login(user: any, accessToken: string | undefined) {
+    try {
+      console.log('Starting login for user:', user.username);
+  
+      if (!user.emailVerified) {
+        console.log('Email not verified for user:', user.username);
+        throw new BadRequestException('Please verify your email before logging in');
       }
+  
+      if (accessToken && typeof accessToken === 'string') {
+        try {
+          const { user: tokenUser } = await this.verifyToken(accessToken);
+          if (tokenUser.username === user.username) {
+            console.log('Valid token for user:', user.username);
+            return {
+              access_token: accessToken,
+              role: user.role,
+            };
+          }
+          console.log('Token mismatch, generating new token');
+        } catch (error) {
+          console.log('Token verification failed:', error.message);
+        }
+      }
+  
+      const payload = { username: user.username, sub: user._id.toString(), role: user.role };
+      console.log('Generating new token with payload:', payload);
+      const newToken = this.jwtService.sign(payload);
+  
+      return {
+        access_token: newToken,
+        role: user.role,
+      };
+    } catch (error) {
+      console.error('Login error:', error);
+      throw new BadRequestException(error.message || 'Login failed');
     }
-    console.log('User object in login:', user);
-    const payload = { username: user.username, sub: user.id, role: user.role };
-    console.log('Token payload:', payload);
-    return {
-      access_token: this.jwtService.sign(payload),
-      role: user.role,
-    };
   }
   async register(
     username: string,
@@ -94,138 +100,117 @@ export class AuthService {
   ) {
     try {
       console.log('Starting registration:', { username, email, role });
+  
       const existingUser = await this.usersService.findOne(username);
       if (existingUser) {
         console.log('Username already exists in users:', username);
         throw new BadRequestException('Username already exists');
       }
-      const existingPendingUser =
-        await this.pendingUsersService.findByUsername(username);
+      const existingPendingUser = await this.pendingUsersService.findByUsername(username);
       if (existingPendingUser) {
         console.log('Username already exists in pendingUsers:', username);
-        throw new BadRequestException(
-          'Username already exists (pending verification)',
-        );
+        throw new BadRequestException('Username already exists (pending verification)');
       }
-      console.log('Username is available:', username);
-      const hashedPassword = await this.usersService.hashedPassword(password);
-      const userData = {
-        username,
-        password: hashedPassword,
-        email,
-        role,
-        emailVerified: false,
-      };
-      console.log('User data prepared:', userData);
-      const pendingUser = await this.pendingUsersService.create(
-        userData.username,
-        userData.password,
-        userData.email,
-        userData.role,
-        userData.emailVerified,
-      );
-      console.log('Pending user created successfully:', pendingUser);
-      const otp = randomInt(100000, 999999).toString();
-      console.log('Generated OTP:', otp);
+  
       if (!email) {
         console.log('Email is missing');
         throw new BadRequestException('Email is required');
       }
-      console.log('Email validated:', email);
-      const otpRecord = await this.otpService.create(
-        pendingUser._id.toString(),
-        otp,
+  
+      const hashedPassword = await this.usersService.hashedPassword(password);
+      console.log('Password hashed successfully');
+  
+      const pendingUser = await this.pendingUsersService.create(
+        username,
+        hashedPassword,
+        email,
+        role,
+        false, // isEmailVerified
       );
-      console.log(
-        'OTP saved to database for pending user:',
-        pendingUser._id,
-        'OTP record:',
-        otpRecord,
-      );
-      console.log('Attempting to send email with OTP to:', email);
+      console.log('Pending user created:', pendingUser._id);
+  
+      const otp = randomInt(100000, 999999).toString();
+      const otpRecord = await this.otpService.create(pendingUser._id.toString(), otp);
+      console.log('OTP saved for pending user:', pendingUser._id, 'OTP:', otp);
+  
       await this.mailerService.sendMail({
         to: email,
         subject: 'Verify your email',
         template: './verify-email',
-        context: {
-          name: username,
-          otp,
-        },
+        context: { name: username, otp },
       });
-      console.log('Email with OTP sent successfully to:', email);
-
-      return { message: 'OTP sent to your email', userId: pendingUser._id };
+      console.log('OTP email sent to:', email);
+  
+      return { message: 'OTP sent to your email', userId: pendingUser._id.toString() };
     } catch (error) {
-      console.error('Error during registration:', error);
-      const errorMessage =
-        error.message || 'Unknown error occurred during registration';
-      throw new BadRequestException(errorMessage);
+      console.error('Registration error:', error);
+      throw new BadRequestException(error.message || 'Registration failed');
     }
   }
   async verifyOtp(otp: string) {
-    console.log('Verifying OTP:', otp);
-
-    const otpRecord = await this.otpService.findByOtp(otp);
-    if (!otpRecord) {
-      console.log('OTP not found:', otp);
-
-      const expiredOtpRecord =
-        await this.otpService.findByOtpWithoutExpiration(otp);
-      if (expiredOtpRecord) {
-        console.log('OTP exists but is expired:', expiredOtpRecord);
-        throw new BadRequestException(
-          'The OTP has expired. Please request a new one.',
-        );
+    try {
+      console.log('Verifying OTP:', otp);
+  
+      // Find OTP record
+      const otpRecord = await this.otpService.findByOtp(otp);
+      if (!otpRecord) {
+        console.log('OTP not found:', otp);
+        const expiredOtpRecord = await this.otpService.findByOtpWithoutExpiration(otp);
+        if (expiredOtpRecord) {
+          console.log('OTP exists but is expired:', expiredOtpRecord);
+          throw new BadRequestException('The OTP has expired. Please request a new one.');
+        }
+        throw new BadRequestException('Invalid OTP. Please try again.');
       }
-
-      throw new BadRequestException('Invalid OTP. Please try again.');
-    }
-    console.log('OTP record found:', otpRecord);
-
-    const userId = new Types.ObjectId(otpRecord.userId);
-
-    // Check if the user is in the pendingUsers collection (for registration)
-    const pendingUser = await this.pendingUsersService.findPendingUserById(
-      userId.toString(),
-    );
-    if (pendingUser) {
-      console.log('Pending user found:', pendingUser);
-
-      const user = await this.usersService.create(
-        pendingUser.username,
-        pendingUser.password,
-        pendingUser.email,
-        pendingUser.role,
-        true,
-      );
-      console.log('User created from pending user:', user);
-
-      await this.pendingUsersService.delete(userId.toString());
-      console.log('Pending user deleted:', userId);
-
+      console.log('OTP record found:', otpRecord);
+  
+      const userId = new Types.ObjectId(otpRecord.userId);
+  
+      // Check pendingUsers for registration
+      const pendingUser = await this.pendingUsersService.findPendingUserById(userId.toString());
+      if (pendingUser) {
+        console.log('Pending user found:', pendingUser);
+  
+        // Create user with pre-hashed password
+        const user = await this.usersService.create(
+          pendingUser.username,
+          pendingUser.password,
+          pendingUser.email,
+          pendingUser.role,
+          true, // emailVerified
+          true, // isHashed
+        );
+        console.log('User created from pending user:', user._id);
+  
+        // Clean up
+        await this.pendingUsersService.delete(userId.toString());
+        console.log('Pending user deleted:', userId);
+        await this.otpService.delete(userId.toString(), otp);
+        console.log('OTP deleted:', otp);
+  
+        return { message: 'Email verified successfully. You can now log in.' };
+      }
+  
+      // Check users for password reset
+      const user = await this.usersService.findById(userId.toString());
+      if (!user) {
+        console.log('User not found for userId:', userId);
+        await this.otpService.delete(userId.toString(), otp);
+        throw new BadRequestException('User not found. Please register again.');
+      }
+      console.log('User found:', user);
+  
       await this.otpService.delete(userId.toString(), otp);
       console.log('OTP deleted:', otp);
-
-      return { message: 'Email verified successfully. You can now log in.' };
+  
+      return {
+        message: 'OTP verified successfully. You can now change your password.',
+        userId: userId.toString(),
+      };
+    } catch (error) {
+      console.error('OTP verification error:', error);
+      throw new BadRequestException(error.message || 'OTP verification failed');
     }
-
-    // Check if the user is in the users collection (for password reset)
-    const user = await this.usersService.findById(userId.toString());
-    if (!user) {
-      console.log('User not found for userId:', userId);
-      await this.otpService.delete(userId.toString(), otp);
-      throw new BadRequestException('User not found. Please register again.');
-    }
-    console.log('User found:', user);
-
-    await this.otpService.delete(userId.toString(), otp);
-    console.log('OTP deleted:', otp);
-
-    // Return the userId so the frontend can use it to change the password
-    return {
-      message: 'OTP verified successfully. You can now change your password.',
-      userId: userId.toString(),
-    };
   }
   async forgotPassword(email: string) {
     try {
