@@ -14,6 +14,7 @@ export interface User {
 export class User {
     @Prop()
     avatar: string; 
+    
     @Prop({ required: true , unique: true})
     username: string;
 
@@ -35,14 +36,12 @@ export class User {
     @Prop()
     lastName: string;
 
-    dob: {
-        day: string;
-        month: string;
-        year: string;
-    };
+    @Prop()
+    dob: Date;
 
     @Prop()
     gender: string;
+    
     @Prop()
     phone: string;
 }

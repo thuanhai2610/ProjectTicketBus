@@ -27,7 +27,17 @@ const Profile = () => {
                     response.data.avatar = `${BACKEND_URL}${response.data.avatar}`;
                     console.log("Avatar URL:", response.data.avatar); // Debug the URL
                 }
-                setProfile(response.data);
+                const dobDate = response.data.dob ? new Date(response.data.dob) : null;
+                const formattedDob = dobDate && !isNaN(dobDate.getTime())
+                    ? `${dobDate.getDate().toString().padStart(2, '0')}/${(dobDate.getMonth() + 1).toString().padStart(2, '0')}/${dobDate.getFullYear()}`
+                    : "Chưa cập nhật";
+
+                // Update the profile data with the formatted dob
+                const profile = {
+                    ...response.data,
+                    dob: formattedDob
+                };
+                setProfile(profile);
                 setLoading(false);
             } catch (error) {
                 console.error("Error fetching profile:", error);
@@ -42,7 +52,6 @@ const Profile = () => {
         navigate(`/update-profile?username=${profile.username}`);
     };
 
-    // Handle image load error
     const handleAvatarError = () => {
         setAvatarError(true);
     };
@@ -121,7 +130,7 @@ const Profile = () => {
                         />
                     </div>
                     <div>
-                        <label className="block text-gray-700">Ngày sinh:</label>
+                        <label className="block text-gray-700">Ngày sinh: {FormData.dob}</label>
                         <input
                             type="text"
                             value={profile.dob || "Chưa cập nhật"}

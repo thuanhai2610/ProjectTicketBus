@@ -20,22 +20,34 @@ export class UsersService {
             email: string,
             role: string,
             emailVerified: boolean,
-        ): Promise<UserDocument> {
+            isHashed: boolean = false, // New flag to skip hashing
+          ): Promise<UserDocument> {
             try {
-                const hashedPassword = await bcrypt.hash(password, 10);
-                const newUser = new this.userModel({
-                    username,
-                    password: hashedPassword,
-                    email,
-                    role,
-                    emailVerified,
-                });
-                return await newUser.save();
+              // Check for existing user
+              const existingUser = await this.userModel.findOne({ username }).exec();
+              if (existingUser) {
+                console.log('Username already exists:', username);
+                throw new BadRequestException('Username already exists');
+              }
+        
+              // Use pre-hashed password or hash it
+              const hashedPassword = isHashed ? password : await bcrypt.hash(password, 10);
+        
+              const newUser = new this.userModel({
+                username,
+                password: hashedPassword,
+                email,
+                role,
+                emailVerified,
+              });
+              const savedUser = await newUser.save();
+              console.log('User created:', savedUser._id);
+              return savedUser;
             } catch (error) {
-                console.error('Error saving user to database:', error);
-                throw new BadRequestException('Failed to create user: ' + error.message);
+              console.error('Error saving user to database:', error);
+              throw new BadRequestException('Failed to create user: ' + error.message);
             }
-        }
+          }
         async findById(id: string): Promise<UserDocument | null> {
             const userId = new Types.ObjectId(id);
             return this.userModel.findById(userId).exec();
@@ -43,10 +55,12 @@ export class UsersService {
         async validateUser(username: string, password: string): Promise<UserDocument | null> {
             const user = await this.userModel.findOne({ username }).exec();
             if (user && user.password && (await bcrypt.compare(password, user.password))) {
-                return user;
+              console.log('User validated successfully:', username);
+              return user;
             }
+            console.log('Invalid credentials for user:', username);
             return null;
-        }
+          }
         async updateEmailVerified(userId: string, isEmailVerified: boolean): Promise<void> {
             const userIdObject = new Types.ObjectId(userId);
             await this.userModel.updateOne({ _id: userIdObject }, { isEmailVerified }).exec();
@@ -78,24 +92,34 @@ export class UsersService {
         }
         async updateProfile(userData: any) {
             const user = await this.userModel.findOne({ username: userData.username });
-        
+          
             if (!user) {
               throw new Error('User not found');
             }
-        
-            user.firstName = userData.firstName;
-            user.lastName = userData.lastName;
-            user.email = userData.email;
-            user.phone = userData.phone;
-            user.dob = userData.dob;
-            user.gender = userData.gender;
-            if (userData.avatar) {
-              user.avatar = userData.avatar; // Lưu đường dẫn ảnh
-            }
-        
-            return user.save();
-          }
           
+            // Update user fields if provided
+            if (userData.firstName !== undefined) user.firstName = userData.firstName;
+            if (userData.lastName !== undefined) user.lastName = userData.lastName;
+            if (userData.email !== undefined) user.email = userData.email;
+            if (userData.phone !== undefined) user.phone = userData.phone;
+            if (userData.gender !== undefined) user.gender = userData.gender;
+            
+            // Handle date of birth - it should already be a Date object from the controller
+            if (userData.dob !== undefined) {
+              user.dob = userData.dob;
+              console.log("Setting DOB to:", user.dob);
+            }
+            
+            // Handle avatar update
+            if (userData.avatar) {
+              user.avatar = userData.avatar;
+            }
+          
+            // Save and return the updated user
+            const savedUser = await user.save();
+            console.log("Saved user:", savedUser);
+            return savedUser;
+          }
         
           async updateAvatar(username: string, avatar: string): Promise<UserDocument> {
             const user = await this.userModel.findOne({ username }).exec();

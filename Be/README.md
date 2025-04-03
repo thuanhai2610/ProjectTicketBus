@@ -30,7 +30,7 @@
 ```bash
 $ npm install
 ```
-
+npm install passport-facebook @nestjs/passport passport ( khong được thên --force)
 ## Compile and run the project
 
 ```bash

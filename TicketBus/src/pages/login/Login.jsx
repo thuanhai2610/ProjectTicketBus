@@ -3,9 +3,10 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook, FaGithub, FaDiscord, FaApple, FaRegEye, FaEyeSlash } from "react-icons/fa";
-import { FaSquareTwitter } from "react-icons/fa6";
+// import { FaSquareTwitter } from "react-icons/fa6";
 import axios from "axios";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+import FacebookLogin from "react-facebook-login/dist/facebook-login-render-props";
 
 const Login = () => {
     const [username, setUsername] = useState("");
@@ -77,7 +78,13 @@ const Login = () => {
         setError("Google login failed. Please try again.");
         setSocialLoading(false);
     };
-
+    const handleFacebookSuccess = (response) => {
+        console.log("Facebook login success:", response);
+    };
+    
+    const handleFacebookFailure = (error) => {
+        console.error("Facebook login failed:", error);
+    };
     return (
         <GoogleOAuthProvider clientId={"1055268521864-uqrdrd5mpqbeskmqe28gb2kk37050t4b.apps.googleusercontent.com"}>
             <div className="flex min-h-screen items-center justify-center bg-red-100">
@@ -85,18 +92,21 @@ const Login = () => {
                     <h2 className="text-red-500 text-3xl font-semibold text-center mb-6">Welcome Back</h2>
 
                     {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-
-                    <div className="flex justify-center space-x-3 mb-4">
-                        {[FaFacebook, FaGithub, FaDiscord, FaApple, FaSquareTwitter].map((Icon, index) => (
-                            <button
-                                key={index}
-                                className="p-2 border border-gray-300 rounded-full text-gray-700 hover:bg-red-500 hover:text-white transition"
-                                disabled={socialLoading}
-                            >
-                                <Icon />
-                            </button>
-                        ))}
-                    </div>
+                    <FacebookLogin
+    appId="YOUR_FACEBOOK_APP_ID" // Thay thế bằng App ID của bạn
+    autoLoad={false}
+    callback={handleFacebookSuccess}
+    onFailure={handleFacebookFailure}
+    render={(renderProps) => (
+        <button
+            onClick={renderProps.onClick}
+            disabled={socialLoading}
+            className="flex items-center justify-center w-full py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-red-500 hover:text-white transition"
+        >
+            <FaFacebook className="mr-2" /> {socialLoading ? "Loading..." : "Log in with Facebook"}
+        </button>
+    )}
+/>
 
                     <GoogleLogin
                         onSuccess={handleGoogleSuccess}

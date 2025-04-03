@@ -46,36 +46,49 @@ import { extname } from 'path';
       };
     }
     @Post('update-profile')
-    @UseInterceptors(FileInterceptor('avatar', {
-      storage: diskStorage({
-        destination: './uploads/', // Thư mục lưu ảnh
-        filename: (req, file, callback) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-          callback(null, uniqueSuffix + '-' + file.originalname);
-        }
-      }),
-    }))
-    async updateProfile(@UploadedFile() file: Express.Multer.File, @Body() userData: any) {
-      console.log("Received data:", userData);
-      console.log("Uploaded file:", file);
-  
-      if (!userData.username) {
-        throw new BadRequestException('Username is required');
-      }
-  
-      // Lưu file vào DB nếu có
-      if (file) {
-        userData.avatar = `/uploads/${file.filename}`;
-      }
-  
-      const updatedUser = await this.userService.updateProfile(userData);
-  
-      return {
-        success: true,
-        message: 'Profile updated successfully',
-        user: updatedUser,
-      };
+@UseInterceptors(FileInterceptor('avatar', {
+  storage: diskStorage({
+    destination: './uploads/',
+    filename: (req, file, callback) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      callback(null, uniqueSuffix + '-' + file.originalname);
     }
+  }),
+}))
+async updateProfile(@UploadedFile() file: Express.Multer.File, @Body() userData: any) {
+  console.log("Received data:", userData);
+  
+  if (!userData.username) {
+    throw new BadRequestException('Username is required');
+  }
+
+  // Handle file upload
+  if (file) {
+    userData.avatar = `/uploads/${file.filename}`;
+  }
+  
+  // Parse date of birth
+  if (userData.dob && userData.dob.trim() !== '') {
+    try {
+      userData.dob = new Date(userData.dob);
+      console.log("Parsed DOB:", userData.dob);
+    } catch (error) {
+      console.error("Error parsing date:", error);
+      throw new BadRequestException('Invalid date format for dob');
+    }
+  } else {
+    // If empty, don't update this field
+    delete userData.dob;
+  }
+
+  const updatedUser = await this.userService.updateProfile(userData);
+
+  return {
+    success: true,
+    message: 'Profile updated successfully',
+    user: updatedUser,
+  };
+}
   
     @Post('update-avatar')
     async updateAvatar(@Body() data: { username: string, avatar: string }) {
