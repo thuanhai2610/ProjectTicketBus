@@ -11,6 +11,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import { RolesGuard } from './roles.guard';
 import { Roles } from './roles.decorator';
 import { RegisterDto } from './dto/register.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller()
 export class AuthController {
@@ -59,5 +60,16 @@ async verifyOtp(@Body('otp') otp: string) {
     async googleLogin(@Body() body: { credential: string }) {
         return this.authService.verifyGoogleCredential(body.credential);
     }
-
+    @Post('facebook-login')
+    @UseGuards(AuthGuard('facebook'))
+    async facebookLogin() {
+    }
+  
+    // @Get('facebook/callback')
+    // @UseGuards(AuthGuard('facebook'))
+    // async facebookLoginCallback(@Request() req: any) {
+    //   const result = await this.authService.login(req.user, undefined);
+    //   return { message: 'Facebook login successful', data: result };
+    // }
+    
 }

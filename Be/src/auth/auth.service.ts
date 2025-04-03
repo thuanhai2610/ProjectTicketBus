@@ -25,7 +25,6 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private otpService: OtpService,
- 
     private mailerService: MailerService,
     private pendingUsersService: PendingUsersService,
   ) { this.googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID); }
