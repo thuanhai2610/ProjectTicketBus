@@ -62,7 +62,22 @@ function ForgotPassword() {
             inputRefs.current[index + 1].focus();
         }
     };
+    const handlePaste = (e) => {
+        e.preventDefault();
+        const pastedData = e.clipboardData.getData("Text").trim();
+        if (!/^\d{6}$/.test(pastedData)) return;
 
+        const otpArray = pastedData.split("");
+        setOtp(otpArray);
+        otpArray.forEach((num, idx) => {
+            if (inputRefs.current[idx]) {
+                inputRefs.current[idx].value = num;
+            }
+        });
+
+        // Move focus to last input
+        inputRefs.current[5]?.focus();
+    };
     const handleResetPassword = async () => {
         if (!newPassword || newPassword !== confirmPassword) {
             setError("Passwords do not match. Please try again.");
@@ -83,11 +98,11 @@ function ForgotPassword() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-cover bg-center bg-red-100">
+        <div className="flex min-h-screen items-center justify-center bg-cover bg-center bg-primaryblue">
             <div className="bg-white p-10 rounded-2xl shadow-2xl w-96 border border-gray-300">
                 {!otpSent ? (
                     <>
-                        <h2 className="text-red-500 text-3xl font-semibold text-center mb-6">Forgot Password</h2>
+                        <h2 className="text-primary text-3xl font-semibold text-center mb-6">Forgot Password</h2>
                         <p className="text-gray-500 text-center mb-6">Enter your email address to receive a password reset OTP.</p>
                         <div className="relative mb-4">
                             <FaEnvelope className="absolute left-3 top-3 text-gray-400" />
@@ -96,42 +111,43 @@ function ForgotPassword() {
                                 placeholder="Email Address"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                             />
                         </div>
-                        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-                        <button onClick={handleSendOTP} className="w-full bg-red-500 text-white py-3 rounded-lg text-lg font-semibold hover:bg-red-600 transition">
+                        {error && <p className="text-primary text-center mb-4">{error}</p>}
+                        <button onClick={handleSendOTP} className="w-full bg-primary text-white py-3 rounded-lg text-lg font-semibold hover:bg-primary transition">
                             Send OTP
                         </button>
                     </>
                 ) : !isOtpVerified ? (
                     <>
-                        <h2 className="text-red-500 text-3xl font-semibold text-center mb-6">Enter OTP</h2>
+                        <h2 className="text-primary text-3xl font-semibold text-center mb-6">Enter OTP</h2>
                         <p className="text-gray-500 text-center mb-6">Please enter the 6-digit OTP sent to {email}.</p>
-                        <div className="flex justify-center gap-2 mb-6">
-                            {otp.map((data, index) => (
-                                <input
-                                    key={index}
-                                    type="text"
-                                    maxLength="1"
-                                    value={data}
-                                    onChange={(e) => handleChange(e, index)}
-                                    ref={(el) => (inputRefs.current[index] = el)}
-                                    className="w-12 h-12 text-center border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-lg"
-                                />
-                            ))}
-                        </div>
-                        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-                        <button onClick={handleVerifyOTP} className="w-full bg-red-500 text-white py-3 rounded-lg text-lg font-semibold hover:bg-red-600 transition">
+                        <div className="flex justify-center gap-2 mb-4">
+                        {otp.map((data, index) => (
+                            <input
+                                key={index}
+                                type="text"
+                                maxLength="1"
+                                value={data}
+                                onChange={(e) => handleChange(e, index)}
+                                onPaste={handlePaste}
+                                ref={(el) => (inputRefs.current[index] = el)}
+                                className="w-12 h-12 text-center border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+                            />
+                        ))}
+                    </div>
+                        {error && <p className="text-primary text-center mb-4">{error}</p>}
+                        <button onClick={handleVerifyOTP} className="w-full bg-primary text-white py-3 rounded-lg text-lg font-semibold hover:bg-primary transition">
                             Verify OTP
                         </button>
                         <p className="text-center text-sm text-gray-500 mt-6">
-                            Didn't receive OTP? <button onClick={handleSendOTP} className="text-red-500 font-medium">Resend</button>
+                            Didn't receive OTP? <button onClick={handleSendOTP} className="text-primary font-medium">Resend</button>
                         </p>
                     </>
                 ) : (
                     <>
-                        <h2 className="text-red-500 text-3xl font-semibold text-center mb-6">Reset Password</h2>
+                        <h2 className="text-primary text-3xl font-semibold text-center mb-6">Reset Password</h2>
                         <p className="text-gray-500 text-center mb-6">Enter your new password below.</p>
                         <div className="relative mb-4">
                             <FaLock className="absolute left-3 top-3 text-gray-400" />
@@ -140,7 +156,7 @@ function ForgotPassword() {
                                 placeholder="New Password"
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                             />
                         </div>
                         <div className="relative mb-4">
@@ -150,17 +166,17 @@ function ForgotPassword() {
                                 placeholder="Confirm Password"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                             />
                         </div>
-                        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-                        <button onClick={handleResetPassword} className="w-full bg-red-500 text-white py-3 rounded-lg text-lg font-semibold hover:bg-red-600 transition">
+                        {error && <p className="text-primary text-center mb-4">{error}</p>}
+                        <button onClick={handleResetPassword} className="w-full bg-primary text-white py-3 rounded-lg text-lg font-semibold hover:bg-primary transition">
                             Reset Password
                         </button>
                     </>
                 )}
                 <p className="text-center text-sm text-gray-500 mt-6">
-                    Remember your password? <Link to="/login" className="text-red-500 font-medium">Login</Link>
+                    Remember your password? <Link to="/login" className="text-primary font-medium">Login</Link>
                 </p>
             </div>
         </div>

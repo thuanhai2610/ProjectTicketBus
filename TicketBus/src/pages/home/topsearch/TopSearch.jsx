@@ -9,7 +9,7 @@ const TopSearch = () => {
     <RootLayout className="space-y-12">
       <motion.div
         initial={{ opacity: 0, y: 800 }}
-        animate={{ opacity: 1, y: -200 }} // Điều chỉnh vị trí xuống 200px
+        animate={{ opacity: 1, y: -200 }} 
         exit={{ opacity: 0, y: 800 }}
         transition={{ duration: 1.5, ease: "easeInOut" }}
         className="w-full flex flex-col items-center space-y-12"
