@@ -81,46 +81,51 @@ const Login = () => {
     const handleFacebookSuccess = (response) => {
         console.log("Facebook login success:", response);
     };
-    
+
     const handleFacebookFailure = (error) => {
         console.error("Facebook login failed:", error);
     };
     return (
         <GoogleOAuthProvider clientId={"1055268521864-uqrdrd5mpqbeskmqe28gb2kk37050t4b.apps.googleusercontent.com"}>
-            <div className="flex min-h-screen items-center justify-center bg-red-100">
+            <div className="flex min-h-screen items-center justify-center bg-primaryblue">
                 <div className="bg-white p-10 rounded-2xl shadow-2xl w-96 border border-gray-300">
-                    <h2 className="text-red-500 text-3xl font-semibold text-center mb-6">Welcome Back</h2>
+                    <h2 className="text-primary text-3xl font-semibold text-center mb-6">Welcome Back</h2>
 
-                    {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-                    <FacebookLogin
-    appId="YOUR_FACEBOOK_APP_ID" // Thay thế bằng App ID của bạn
-    autoLoad={false}
-    callback={handleFacebookSuccess}
-    onFailure={handleFacebookFailure}
-    render={(renderProps) => (
-        <button
-            onClick={renderProps.onClick}
-            disabled={socialLoading}
-            className="flex items-center justify-center w-full py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-red-500 hover:text-white transition"
-        >
-            <FaFacebook className="mr-2" /> {socialLoading ? "Loading..." : "Log in with Facebook"}
-        </button>
-    )}
-/>
+                    {error && <p className="text-primary text-center mb-4">{error}</p>}
+                    <div className="space-y-4">
 
-                    <GoogleLogin
-                        onSuccess={handleGoogleSuccess}
-                        onError={handleGoogleFailure}
-                        render={(renderProps) => (
-                            <button
-                                onClick={renderProps.onClick}
-                                disabled={renderProps.disabled || socialLoading}
-                                className="flex items-center justify-center w-full py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-red-500 hover:text-white transition"
-                            >
-                                <FcGoogle className="mr-2" /> {socialLoading ? "Loading..." : "Log in with Google"}
-                            </button>
-                        )}
-                    />
+                        <FacebookLogin
+                            appId="YOUR_FACEBOOK_APP_ID"
+                            autoLoad={false}
+                            callback={handleFacebookSuccess}
+                            onFailure={handleFacebookFailure}
+                            render={(renderProps) => (
+                                <button
+                                    onClick={renderProps.onClick}
+                                    disabled={socialLoading}
+                                    className="flex items-center justify-center w-full py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-primary hover:text-white transition duration-200"
+                                >
+                                    <FaFacebook className="mr-2" /> {socialLoading ? "Loading..." : "Log in with Facebook"}
+                                </button>
+                            )}
+                        />
+
+              
+                        <GoogleLogin
+                            onSuccess={handleGoogleSuccess}
+                            onError={handleGoogleFailure}
+                            render={(renderProps) => (
+                                <button
+                                    onClick={renderProps.onClick}
+                                    disabled={renderProps.disabled || socialLoading}
+                                    className="flex items-center justify-center w-full py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-primary hover:text-white transition duration-200"
+                                >
+                                    <FcGoogle className="mr-2" /> {socialLoading ? "Loading..." : "Log in with Google"}
+                                </button>
+                            )}
+                        />
+                    </div>
+
 
                     <div className="my-6 flex items-center">
                         <div className="flex-1 border-t border-gray-300"></div>
@@ -135,7 +140,7 @@ const Login = () => {
                                 type="text"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                                 required
                             />
                         </div>
@@ -146,7 +151,7 @@ const Login = () => {
                                 type={showPassword ? "text" : "password"}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 pr-10"
+                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary pr-10"
                                 required
                             />
                             <button
@@ -162,12 +167,12 @@ const Login = () => {
                             <label className="flex items-center">
                                 <input type="checkbox" className="mr-2" /> Keep me logged in
                             </label>
-                            <Link to="/forgot-password" className="text-red-500">Forgot Password?</Link>
+                            <Link to="/forgot-password" className="text-primary">Forgot Password?</Link>
                         </div>
 
                         <button
                             type="submit"
-                            className="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition"
+                            className="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary transition"
                             disabled={isLoading}
                         >
                             {isLoading ? "Logging in..." : "Log In"}
@@ -175,7 +180,7 @@ const Login = () => {
                     </form>
 
                     <p className="text-center text-sm text-gray-500 mt-6">
-                        Need an account? <Link to="/register" className="text-red-500 font-medium">Sign Up</Link>
+                        Need an account? <Link to="/register" className="text-primary font-medium">Sign Up</Link>
                     </p>
                 </div>
             </div>

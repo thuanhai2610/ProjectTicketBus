@@ -31,7 +31,7 @@ const Register = () => {
             if (response.data.otp) {
                 alert(`For testing: Your OTP is ${response.data.otp}`);
             }
-            navigate("/verify-otp");
+            navigate("/verify-otp")
         } catch (error) {
             // Log the full error for debugging
             console.error('Registration error:', error);
@@ -44,31 +44,9 @@ const Register = () => {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-red-100">
+        <div className="flex items-center justify-center min-h-screen bg-primaryblue">
             <div className="bg-white p-10 rounded-2xl shadow-2xl w-96 h-auto border border-gray-300 justify-end">
-                <h2 className="text-red-500 text-3xl font-semibold text-center mb-6">Sign Up</h2>
-                
-                <div className="flex justify-center space-x-3 mb-4">
-                    <button className="p-2 border border-gray-300 rounded-full text-gray-700 hover:bg-red-500 hover:text-white transition">
-                        <FaFacebook />
-                    </button>
-                    <button className="p-2 border border-gray-300 rounded-full text-gray-700 hover:bg-red-500 hover:text-white transition">
-                        <FaGithub />
-                    </button>
-                    <button className="p-2 border border-gray-300 rounded-full text-gray-700 hover:bg-red-500 hover:text-white transition">
-                        <FaDiscord />
-                    </button>
-                    <button className="p-2 border border-gray-300 rounded-full text-gray-700 hover:bg-red-500 hover:text-white transition">
-                        <FaApple  />
-                    </button>
-                    <button className="p-2 border border-gray-300 rounded-full text-gray-700 hover:bg-red-500 hover:text-white transition">
-                        <FaSquareTwitter  />
-                    </button>
-                </div>
-                
-                <button className="flex items-center justify-center w-full py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-red-500 hover:text-white transition">
-                    <FcGoogle className="mr-2" /> Sign up with Google
-                </button>
+                <h2 className="text-primary text-3xl font-semibold text-center mb-6">Sign Up</h2>
                 
                 <div className="my-6 flex items-center">
                     <div className="flex-1 border-t border-gray-300"></div>
@@ -83,7 +61,7 @@ const Register = () => {
                             type="text" 
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                             required
                         />
                     </div>
@@ -93,7 +71,7 @@ const Register = () => {
                             type="email" 
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                             required
                         />
                     </div>
@@ -103,7 +81,7 @@ const Register = () => {
                             type={showPassword ? "text" : "password"}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 pr-10"
+                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary pr-10"
                             required
                         />
                         <button
@@ -124,15 +102,15 @@ const Register = () => {
                         />
                         <p className="text-sm text-neutral-500">
                             Creating an account means you're okay with our 
-                            <span className="text-red-500 cursor-pointer"> Terms of Service</span>, 
-                            <span className="text-red-500 cursor-pointer"> Privacy Policy</span>, 
-                            and our default <span className="text-red-500 cursor-pointer"> Notification Settings</span>.
+                            <span className="text-primary cursor-pointer"> Terms of Service</span>, 
+                            <span className="text-primary cursor-pointer"> Privacy Policy</span>, 
+                            and our default <span className="text-primary cursor-pointer"> Notification Settings</span>.
                         </p>
                     </div>
                     
                     <button 
                         type="submit"
-                        className="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition duration-300"
+                        className="w-full bg-primary text-white py-2 rounded-lg hover:bg-primaryblue hover:text-primary transition duration-300"
                     >
                         Create Account
                     </button>
@@ -140,7 +118,7 @@ const Register = () => {
                 
                 <p className="text-center text-neutral-500 mt-4">
                     Already a member?
-                    <Link to="/login" className="text-red-500 hover:underline ml-1">
+                    <Link to="/login" className="text-primary hover:underline ml-1">
                         Sign in
                     </Link>
                 </p>

@@ -2,6 +2,7 @@ import React from 'react'
 import { FaWifi } from 'react-icons/fa'
 import { GiCharging, GiWaterBottle } from 'react-icons/gi'
 import { IoTv } from 'react-icons/io5'
+import { Link } from 'react-router-dom'
 
 const TopSearchCard = ({ routeFrom, routeTo, timeDuration, price }) => {
     return (
@@ -77,9 +78,9 @@ const TopSearchCard = ({ routeFrom, routeTo, timeDuration, price }) => {
                 <h1 className="text-xl text-neutral-700 font-semibold">
                    $. {price}
                 </h1>
-                <button className="w-fit px-5 py-1.5 bg-primary hover:bg-transparent border-2  border-primary hover:border-primary rounded-xl text-sm font-normal text-neutral-50 flex items-center justify-center gap-x-2 hover:text-primary ease-in-out duration-300">
+                <Link to={"/bus-tickets/detail"} className="w-fit px-5 py-1.5 bg-primary hover:bg-transparent border-2  border-primary hover:border-primary rounded-xl text-sm font-normal text-neutral-50 flex items-center justify-center gap-x-2 hover:text-primary ease-in-out duration-300">
                     Reserve Seat
-                </button>
+                </Link>
             </div>
         </div>
     )

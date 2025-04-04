@@ -43,7 +43,7 @@ const Filter = ({ className }) => {
                     onValueChange={setPriceRange}
                     className="w-full"
                 />
-                <div className="flex justify-between text-sm text-neutral-500">
+                <div className="flex justify-between text-sm text-neutral-800">
                     <span>₫{priceRange[0]}</span>
                     <span>₫{priceRange[1]}</span>
                 </div>
