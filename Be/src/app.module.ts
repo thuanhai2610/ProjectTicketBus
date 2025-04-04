@@ -13,10 +13,11 @@ import { join } from 'path';
 import { ConfigModule } from '@nestjs/config';
 import { PendingUsersModule } from './pending-users/pending-users.module';
 import { UsersModule } from './users/users.module';
+import { CompaniesModule } from './function/companies/company.module';
 @Module({
   imports: [AuthModule, PendingUsersModule, ItemsModule, MongooseModule.forRoot('mongodb://localhost:27017/admin'),ConfigModule.forRoot({
-      isGlobal: true, // Làm cho ConfigModule có sẵn toàn cục
-      envFilePath: '.env', // Đường dẫn đến file .env
+      isGlobal: true, 
+      envFilePath: '.env', 
     }),
     MailerModule.forRoot({
       transport: {
@@ -38,7 +39,7 @@ import { UsersModule } from './users/users.module';
           strict: true,
         }
        }
-    }), UsersModule
+    }), UsersModule, CompaniesModule
   ],
 
   controllers: [AppController],

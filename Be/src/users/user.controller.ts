@@ -5,25 +5,20 @@ import {
     NotFoundException, 
     Post,
     Query, 
-    Req, 
-    UseGuards,
     Body,
     UseInterceptors,
     UploadedFile
   } from '@nestjs/common';
-  import { AuthGuard } from '@nestjs/passport';
   import { UsersService } from './users.service';
 import { FileInterceptor } from '@nestjs/platform-express/multer';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
-  
   @Controller('user')
   export class UserController {
     constructor(private readonly userService: UsersService) {}
   
     @Get('profile')
     async getUser(@Query('username') username: string) {
-      console.log("Received username:", username); // Debugging
+      console.log("Received username:", username); 
   
       if (!username) {
         throw new BadRequestException('Username is required');
@@ -62,12 +57,10 @@ async updateProfile(@UploadedFile() file: Express.Multer.File, @Body() userData:
     throw new BadRequestException('Username is required');
   }
 
-  // Handle file upload
   if (file) {
     userData.avatar = `/uploads/${file.filename}`;
   }
-  
-  // Parse date of birth
+
   if (userData.dob && userData.dob.trim() !== '') {
     try {
       userData.dob = new Date(userData.dob);
@@ -77,7 +70,7 @@ async updateProfile(@UploadedFile() file: Express.Multer.File, @Body() userData:
       throw new BadRequestException('Invalid date format for dob');
     }
   } else {
-    // If empty, don't update this field
+  
     delete userData.dob;
   }
 

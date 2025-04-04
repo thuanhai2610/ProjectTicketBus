@@ -47,3 +47,5 @@ npx shadcn@latest init  ( dùng --legacy-peer-deps , newyork )
 
 ### Facebook
 npm install react-facebook-login --force
+
+npm install @mui/material @mui/icons-material @emotion/react @emotion/styled axios
