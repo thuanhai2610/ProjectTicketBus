@@ -131,4 +131,12 @@ export class UsersService {
               throw new BadRequestException('Failed to update avatar: ' + error.message);
             }
           }
+          async findAll(): Promise<UserDocument[]> {
+            try {
+              return await this.userModel.find().exec();
+            } catch (error) {
+              console.error('Error fetching all users:', error);
+              throw new BadRequestException('Failed to fetch users: ' + error.message);
+            }
+          }
 }

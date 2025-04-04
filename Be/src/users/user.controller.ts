@@ -7,11 +7,15 @@ import {
     Query, 
     Body,
     UseInterceptors,
-    UploadedFile
+    UploadedFile,
+    UnauthorizedException,
+    UseGuards
   } from '@nestjs/common';
   import { UsersService } from './users.service';
 import { FileInterceptor } from '@nestjs/platform-express/multer';
 import { diskStorage } from 'multer';
+import { Roles } from 'src/auth/roles.decorator';
+import { AuthGuard } from '@nestjs/passport';
   @Controller('user')
   export class UserController {
     constructor(private readonly userService: UsersService) {}
@@ -41,7 +45,7 @@ import { diskStorage } from 'multer';
       };
     }
     @Post('update-profile')
-@UseInterceptors(FileInterceptor('avatar', {
+    @UseInterceptors(FileInterceptor('avatar', {
   storage: diskStorage({
     destination: './uploads/',
     filename: (req, file, callback) => {
@@ -49,8 +53,8 @@ import { diskStorage } from 'multer';
       callback(null, uniqueSuffix + '-' + file.originalname);
     }
   }),
-}))
-async updateProfile(@UploadedFile() file: Express.Multer.File, @Body() userData: any) {
+    }))
+    async updateProfile(@UploadedFile() file: Express.Multer.File, @Body() userData: any) {
   console.log("Received data:", userData);
   
   if (!userData.username) {
@@ -81,7 +85,7 @@ async updateProfile(@UploadedFile() file: Express.Multer.File, @Body() userData:
     message: 'Profile updated successfully',
     user: updatedUser,
   };
-}
+    }
   
     @Post('update-avatar')
     async updateAvatar(@Body() data: { username: string, avatar: string }) {
@@ -95,5 +99,20 @@ async updateProfile(@UploadedFile() file: Express.Multer.File, @Body() userData:
         success: true,
         message: 'Avatar updated successfully'
       };
+    }
+     
+    @Get('all')
+    @UseGuards(AuthGuard('jwt'))
+    @Roles('admin')
+    async findAll() {
+      const users = await this.userService.findAll();
+      return users
+        .filter((user) => user.role !== 'admin') 
+        .map((user) => ({
+          username: user.username,
+          phone: user.phone || 'N/A',
+          email: user.email || 'N/A',
+          dob: user.dob || 'N/A',
+        }));
     }
   }

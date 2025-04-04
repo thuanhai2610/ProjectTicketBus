@@ -5,6 +5,7 @@ import { User, UserSchema } from "./user.schema";
 import { UserController } from "./user.controller";
 import { join } from "path";
 import { ServeStaticModule } from "@nestjs/serve-static";
+import { UsersRepository } from "./user.repository";
 
 @Module({
 imports: [MongooseModule.forFeature([{name: User.name, schema: UserSchema}]),ServeStaticModule.forRoot({
@@ -12,7 +13,7 @@ imports: [MongooseModule.forFeature([{name: User.name, schema: UserSchema}]),Ser
     serveRoot: '/uploads',
   }), ],
 
-providers: [UsersService],
+providers: [UsersService, UsersRepository],
 exports: [UsersService],
 controllers: [UserController]
 

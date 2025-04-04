@@ -14,6 +14,7 @@ import { ConfigModule } from '@nestjs/config';
 import { PendingUsersModule } from './pending-users/pending-users.module';
 import { UsersModule } from './users/users.module';
 import { CompaniesModule } from './function/companies/company.module';
+import { VehicleModule } from './function/vehicle/vehicle.module';
 @Module({
   imports: [AuthModule, PendingUsersModule, ItemsModule, MongooseModule.forRoot('mongodb://localhost:27017/admin'),ConfigModule.forRoot({
       isGlobal: true, 
@@ -39,7 +40,7 @@ import { CompaniesModule } from './function/companies/company.module';
           strict: true,
         }
        }
-    }), UsersModule, CompaniesModule
+    }), UsersModule, CompaniesModule, VehicleModule
   ],
 
   controllers: [AppController],
