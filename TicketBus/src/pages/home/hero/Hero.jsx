@@ -51,7 +51,7 @@ const Hero = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.85, ease: "easeInOut" }}
         >
-            <RootLayout className="absolute top-32 right-2 w-[60ch] h-auto py-8 px-10 bg-gradient-to-b from-neutral-50/80 via-neutral-50/50 to-neutral-50/20 flex items-start justify-center text-start flex-col gap-6">
+            <RootLayout className="absolute top-72 left-10  h-auto py-8 px-10 flex items-start justify-start text-start flex-col gap-6">
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={currentSlide}
@@ -59,18 +59,18 @@ const Hero = () => {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -100 }}
                         transition={{ duration: 0.5, ease: "easeInOut" }}
-                        className="space-y-4 w-full"
+                        className="space-y-4 w-[40%]"
                     >
-                        <motion.h1 className="text-4xl text-primary font-bold uppercase tracking-wide w-full text-wrap">
+                        <motion.h1 className="text-4xl text-primaryblue font-bold uppercase tracking-wide w-full text-wrap">
                             {slides[currentSlide].title}
                         </motion.h1>
 
-                        <motion.p className="text-lg text-gray-600 max-w-full">
+                        <motion.p className="text-lg text-gray-400 max-w-full">
                             {slides[currentSlide].description}
                         </motion.p>
 
                         <motion.button
-                            className="mt-4 px-6 py-3 bg-primary text-white text-lg font-semibold rounded-lg shadow-md hover:bg-neutral-500 transition"
+                            className="mt-4 px-6 py-3 bg-primary text-white text-lg font-semibold rounded-lg shadow-md shadow-slate-100 hover:bg-primaryblue hover:text-neutral-700 transition"
                         >
                             {slides[currentSlide].buttonText}
                         </motion.button>
@@ -82,7 +82,7 @@ const Hero = () => {
                     {slides.map((_, index) => (
                         <span
                             key={index}
-                            className={`w-3 h-3 rounded-full transition-all duration-300 cursor-pointer ${index === currentSlide ? "bg-primary scale-110" : "bg-gray-400"}`}
+                            className={`w-3 h-3 rounded-full transition-all duration-300 cursor-pointer ${index === currentSlide ? "bg-primaryblue scale-110" : "bg-gray-400"}`}
                             onClick={() => setCurrentSlide(index)}
                         ></span>
                     ))}
