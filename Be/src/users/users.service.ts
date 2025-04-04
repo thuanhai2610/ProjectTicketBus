@@ -3,8 +3,6 @@ import * as bcrypt from "bcrypt";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { User, UserDocument } from "./user.schema";
-import { AuthGuard } from "@nestjs/passport";
-
 @Injectable()
 export class UsersService {
     constructor(@InjectModel(User.name) private userModel: Model <UserDocument>) {}
@@ -20,17 +18,15 @@ export class UsersService {
             email: string,
             role: string,
             emailVerified: boolean,
-            isHashed: boolean = false, // New flag to skip hashing
+            isHashed: boolean = false, 
           ): Promise<UserDocument> {
             try {
-              // Check for existing user
               const existingUser = await this.userModel.findOne({ username }).exec();
               if (existingUser) {
                 console.log('Username already exists:', username);
                 throw new BadRequestException('Username already exists');
               }
         
-              // Use pre-hashed password or hash it
               const hashedPassword = isHashed ? password : await bcrypt.hash(password, 10);
         
               const newUser = new this.userModel({
@@ -97,25 +93,24 @@ export class UsersService {
               throw new Error('User not found');
             }
           
-            // Update user fields if provided
+      
             if (userData.firstName !== undefined) user.firstName = userData.firstName;
             if (userData.lastName !== undefined) user.lastName = userData.lastName;
             if (userData.email !== undefined) user.email = userData.email;
             if (userData.phone !== undefined) user.phone = userData.phone;
             if (userData.gender !== undefined) user.gender = userData.gender;
             
-            // Handle date of birth - it should already be a Date object from the controller
+
             if (userData.dob !== undefined) {
               user.dob = userData.dob;
               console.log("Setting DOB to:", user.dob);
             }
-            
-            // Handle avatar update
+
             if (userData.avatar) {
               user.avatar = userData.avatar;
             }
           
-            // Save and return the updated user
+     
             const savedUser = await user.save();
             console.log("Saved user:", savedUser);
             return savedUser;
@@ -134,6 +129,14 @@ export class UsersService {
             } catch (error) {
               console.error('Error updating avatar:', error);
               throw new BadRequestException('Failed to update avatar: ' + error.message);
+            }
+          }
+          async findAll(): Promise<UserDocument[]> {
+            try {
+              return await this.userModel.find().exec();
+            } catch (error) {
+              console.error('Error fetching all users:', error);
+              throw new BadRequestException('Failed to fetch users: ' + error.message);
             }
           }
 }

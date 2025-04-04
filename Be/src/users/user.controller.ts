@@ -5,25 +5,24 @@ import {
     NotFoundException, 
     Post,
     Query, 
-    Req, 
-    UseGuards,
     Body,
     UseInterceptors,
-    UploadedFile
+    UploadedFile,
+    UnauthorizedException,
+    UseGuards
   } from '@nestjs/common';
-  import { AuthGuard } from '@nestjs/passport';
   import { UsersService } from './users.service';
 import { FileInterceptor } from '@nestjs/platform-express/multer';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
-  
+import { Roles } from 'src/auth/roles.decorator';
+import { AuthGuard } from '@nestjs/passport';
   @Controller('user')
   export class UserController {
     constructor(private readonly userService: UsersService) {}
   
     @Get('profile')
     async getUser(@Query('username') username: string) {
-      console.log("Received username:", username); // Debugging
+      console.log("Received username:", username); 
   
       if (!username) {
         throw new BadRequestException('Username is required');
@@ -46,7 +45,7 @@ import { extname } from 'path';
       };
     }
     @Post('update-profile')
-@UseInterceptors(FileInterceptor('avatar', {
+    @UseInterceptors(FileInterceptor('avatar', {
   storage: diskStorage({
     destination: './uploads/',
     filename: (req, file, callback) => {
@@ -54,20 +53,18 @@ import { extname } from 'path';
       callback(null, uniqueSuffix + '-' + file.originalname);
     }
   }),
-}))
-async updateProfile(@UploadedFile() file: Express.Multer.File, @Body() userData: any) {
+    }))
+    async updateProfile(@UploadedFile() file: Express.Multer.File, @Body() userData: any) {
   console.log("Received data:", userData);
   
   if (!userData.username) {
     throw new BadRequestException('Username is required');
   }
 
-  // Handle file upload
   if (file) {
     userData.avatar = `/uploads/${file.filename}`;
   }
-  
-  // Parse date of birth
+
   if (userData.dob && userData.dob.trim() !== '') {
     try {
       userData.dob = new Date(userData.dob);
@@ -77,7 +74,7 @@ async updateProfile(@UploadedFile() file: Express.Multer.File, @Body() userData:
       throw new BadRequestException('Invalid date format for dob');
     }
   } else {
-    // If empty, don't update this field
+  
     delete userData.dob;
   }
 
@@ -88,7 +85,7 @@ async updateProfile(@UploadedFile() file: Express.Multer.File, @Body() userData:
     message: 'Profile updated successfully',
     user: updatedUser,
   };
-}
+    }
   
     @Post('update-avatar')
     async updateAvatar(@Body() data: { username: string, avatar: string }) {
@@ -102,5 +99,20 @@ async updateProfile(@UploadedFile() file: Express.Multer.File, @Body() userData:
         success: true,
         message: 'Avatar updated successfully'
       };
+    }
+     
+    @Get('all')
+    @UseGuards(AuthGuard('jwt'))
+    @Roles('admin')
+    async findAll() {
+      const users = await this.userService.findAll();
+      return users
+        .filter((user) => user.role !== 'admin') 
+        .map((user) => ({
+          username: user.username,
+          phone: user.phone || 'N/A',
+          email: user.email || 'N/A',
+          dob: user.dob || 'N/A',
+        }));
     }
   }
