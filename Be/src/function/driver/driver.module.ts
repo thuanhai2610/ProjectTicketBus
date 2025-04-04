@@ -16,6 +16,6 @@ import { Company, CompanySchema } from '../companies/schemas/company.schema';
   ],
   controllers: [DriverController],
   providers: [DriverService, DriverRepository],
-  exports: [DriverService],
+  exports: [DriverService, MongooseModule],
 })
 export class DriverModule {}

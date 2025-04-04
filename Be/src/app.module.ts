@@ -16,6 +16,7 @@ import { UsersModule } from './users/users.module';
 import { CompaniesModule } from './function/companies/company.module';
 import { VehicleModule } from './function/vehicle/vehicle.module';
 import { DriverModule } from './function/driver/driver.module';
+import { TripModule } from './function/trip/trip.module';
 @Module({
   imports: [AuthModule, PendingUsersModule, ItemsModule, MongooseModule.forRoot('mongodb://localhost:27017/admin'),ConfigModule.forRoot({
       isGlobal: true, 
@@ -41,7 +42,7 @@ import { DriverModule } from './function/driver/driver.module';
           strict: true,
         }
        }
-    }), UsersModule, CompaniesModule, VehicleModule, DriverModule
+    }), UsersModule, CompaniesModule, VehicleModule, DriverModule, TripModule
   ],
 
   controllers: [AppController],

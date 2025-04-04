@@ -13,6 +13,6 @@ import { CompaniesService } from './company.service';
   ],
   controllers: [CompaniesController],
   providers: [CompaniesService, CompanyRepository],
-  exports: [CompaniesService],
+  exports: [CompaniesService, MongooseModule],
 })
 export class CompaniesModule {}

@@ -4,11 +4,11 @@ import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { Vehicle, VehicleDocument } from './schemas/vehicle.schema';
 import { VehicleRepository } from './vehicle.repsitory';
 import { InjectModel } from '@nestjs/mongoose';
-import { Company, CompanyDocument } from '../companies/schemas/company.schema';
 import { Model } from 'mongoose';
+import { Company, CompanyDocument } from '../companies/schemas/company.schema';
 
 @Injectable()
-export class CompaniesService {
+export class VehicleService {
   constructor(@InjectModel(Vehicle.name) private vehicleModel: Model<VehicleDocument>,
   @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
   private readonly vehicleRepository: VehicleRepository) {}
@@ -23,7 +23,6 @@ export class CompaniesService {
     const createdVehicle = new this.vehicleModel(createVehicleDto);
     return createdVehicle.save();
   }
-
   findAll(): Promise<Vehicle[]> {
     return this.vehicleRepository.findAll();
   }
@@ -38,5 +37,20 @@ export class CompaniesService {
 
   remove(id: string): Promise<Vehicle> {
     return this.vehicleRepository.remove(id);
+  }
+
+  async findByCompanyId(companyId: string): Promise<Vehicle[]> {
+    console.log(`Fetching vehicles for companyId: ${companyId}`);
+    
+    const vehicles = await this.vehicleModel.aggregate([
+      {
+        $match: {
+          companyId: companyId
+        }
+      }
+    ]).exec();
+    
+    console.log(`Found vehicles: ${JSON.stringify(vehicles)}`);
+    return vehicles || [];
   }
 }

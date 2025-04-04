@@ -7,7 +7,7 @@ export type VehicleDocument = Vehicle & Document;
 export class Vehicle {
   @Prop({required: true, type: String})
       vehicleId: string;
-      @Prop({required: true, type: String, ref : 'Company' })
+      @Prop({required: true, type: String, ref : 'Vehicle' })
       companyId: string;
       @Prop({required: true})
     lisencePlate: string;
@@ -23,7 +23,7 @@ VehicleSchema.pre('save', async function (next) {
   const vehicle = this as VehicleDocument;
   const company = await this.model('Company').findOne({companyId: vehicle.companyId}).exec();
   if (!company) {
-    const error = new Error(`Company with ID ${vehicle.companyId} does not exist`);
+    const error = new Error(`company with ID ${vehicle.companyId} does not exist`);
     return next(error);
   }
 
